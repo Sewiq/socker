@@ -4,6 +4,8 @@
   "description": "Piłkarzyki na kartce — mobilna gra z reklamami AdMob (Capacitor + Android).",
   "private": true,
   "scripts": {
+    "dev": "node scripts/dev-server.js",
+    "dev:lan": "node scripts/dev-server.js --lan",
     "version:sync": "node scripts/sync-version.js",
     "presync": "npm run version:sync",
     "sync": "cap sync",
