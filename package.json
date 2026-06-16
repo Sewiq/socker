@@ -4,6 +4,7 @@
   "description": "ProStriker — papierowa gra w piłkę (piłkarzyki na kartce). PWA + Capacitor Android + multiplayer online.",
   "private": true,
   "scripts": {
+    "test": "node --test test/*.test.js",
     "dev": "node scripts/dev-server.js",
     "dev:lan": "node scripts/dev-server.js --lan",
     "version:sync": "node scripts/sync-version.js",
