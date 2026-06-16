@@ -7,6 +7,7 @@
     "test": "node --test test/*.test.js",
     "dev": "node scripts/dev-server.js",
     "dev:lan": "node scripts/dev-server.js --lan",
+    "landing": "node scripts/dev-server.js --root",
     "version:sync": "node scripts/sync-version.js",
     "presync": "npm run version:sync",
     "sync": "cap sync",

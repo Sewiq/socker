@@ -16,9 +16,14 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
-const PORT = Number(process.env.PORT) || 8765;
-const ROOT = path.resolve(__dirname, "..", "www");
 const LAN = process.argv.includes("--lan");
+// --root: serwuj korzeń repo (landing page = index.html, gra w /www/).
+// domyślnie: tylko www/ (sama gra).
+const SERVE_ROOT = process.argv.includes("--root");
+const PORT = Number(process.env.PORT) || (SERVE_ROOT ? 8080 : 8765);
+const ROOT = SERVE_ROOT
+  ? path.resolve(__dirname, "..")
+  : path.resolve(__dirname, "..", "www");
 
 const TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -35,7 +40,7 @@ const TYPES = {
 
 const server = http.createServer((req, res) => {
   let url = decodeURIComponent(req.url.split("?")[0]);
-  if (url === "/") url = "/index.html";
+  if (url.endsWith("/")) url += "index.html";   // katalog → index.html (np. /www/ → /www/index.html)
   const filePath = path.join(ROOT, url);
 
   // bezpieczeństwo: nie dawaj wyjść z www/
