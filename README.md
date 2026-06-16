@@ -5,7 +5,7 @@ Gra jest darmowa i wyświetla reklamy Google AdMob (banner u dołu, opcjonalny i
 
 📊 **[Status projektu — co zrobione, co w planach →](docs/STATUS.md)**
 🗺️ **[Roadmap — fazy 0→4 →](docs/ROADMAP.md)** · 🌐 **[i18n →](docs/I18N.md)** · 💾 **[Warstwa danych →](docs/STORAGE.md)**
-⚡ **[Iteracja w przeglądarce — `npm run dev` →](docs/DEV.md)**
+⚡ **[Iteracja w przeglądarce — `npm run dev` →](docs/DEV.md)** · 📋 **[Pull → AAB →](docs/NEXT-STEPS.md)**
 
 Cały silnik gry żyje w `www/` jako zwykła PWA (HTML/CSS/JS, bez bibliotek).
 **Capacitor** opakowuje to w natywne APK/AAB, a plugin
