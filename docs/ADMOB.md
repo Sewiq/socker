@@ -38,7 +38,25 @@ W `www/index.html` (parametr `isTesting: true`) i `capacitor.config.json`
 > ⚠️ NIGDY nie klikaj własnych prawdziwych reklam ani nie publikuj apki z testowym ID.
 > Klikanie własnych = blokada konta AdMob bez ostrzeżenia.
 
-## Krok 4 — app-ads.txt
+## Krok 4 — UMP (zgoda RODO) ✅
+
+Kod w `www/index.html` (funkcja `requestConsent`) używa
+`@capacitor-community/admob` 6.x:
+`AdMob.requestConsentInfo()` → `AdMob.showConsentForm()` przy pierwszym
+uruchomieniu w EOG/UK/CH. Konfiguracja w panelu **AdMob → Privacy & messaging
+→ GDPR**:
+
+1. Utwórz wiadomość zgody (consent message) — Google daje gotowy kreator
+2. Wybierz języki (polski + angielski wystarczą)
+3. Opublikuj wiadomość
+
+Bez tego AdMob serwuje tylko reklamy niespersonalizowane (niższe stawki)
+i grozi blokadą konta w EU.
+
+W grze widoczny jest też przycisk **„Ustawienia prywatności"**, który
+resetuje zgodę i pokazuje formularz ponownie — wymagane przez politykę Google.
+
+## Krok 5 — app-ads.txt
 
 Plik `www/app-ads.txt` jest już z Twoim pub-ID. Po włączeniu GitHub Pages
 będzie pod `https://sewiq.github.io/socker/app-ads.txt` — ten URL wpisujesz

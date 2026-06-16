@@ -148,6 +148,10 @@
     </div>
   </div>
 
+  <div class="panel" id="privacyPanel" style="margin-top:12px;display:none">
+    <button class="btn" id="privacyBtn" style="width:100%">Ustawienia prywatności (zgoda na reklamy)</button>
+  </div>
+
   <div class="panel" style="margin-top:12px">
     <details>
       <summary>Zasady</summary>
@@ -497,17 +501,39 @@ if(!isNative && "serviceWorker" in navigator && location.protocol.startsWith("ht
 }
 
 // ---------- integracja natywna (Android via Capacitor) ----------
-// AdMob banner u dołu + lekkie wibracje.
-// Produkcyjny ID baneru; tryb testowy (isTesting/initializeForTesting) zostaje TRUE
-// aż do buildu produkcyjnego — Google wymaga tego do testów, klikanie własnych
-// prawdziwych reklam = blokada konta.
+// 1) UMP — zgoda RODO (wymagana w EOG/UK/CH; poza tym natychmiast resolvuje).
+// 2) AdMob.initialize — dopiero PO uzyskaniu zgody.
+// 3) Banner ADAPTIVE u dołu ekranu.
+// Tryb testowy zostaje TRUE aż do buildu produkcyjnego — klikanie własnych
+// prawdziwych reklam = blokada konta AdMob.
 const AD_UNIT_BANNER = "ca-app-pub-9793821286854398/6982945977"; // Socker_baner
 const AD_TESTING = true; // przed releasem → false
+
+async function requestConsent(AdMob){
+  // UMP — User Messaging Platform; metody dostępne w @capacitor-community/admob 6.x.
+  try{
+    const info = await AdMob.requestConsentInfo({
+      // tester: traktuj urządzenie jako EOG, żeby zobaczyć formularz w developmencie
+      debugGeography: AD_TESTING ? "EEA" : "DISABLED",
+      testDeviceIdentifiers: []
+    });
+    // Status: NOT_REQUIRED | REQUIRED | OBTAINED | UNKNOWN
+    if(info && (info.isConsentFormAvailable || info.status === "REQUIRED")){
+      await AdMob.showConsentForm();
+    }
+  }catch(e){
+    // Brak UMP w starszych wersjach pluginu albo brak sieci — idziemy dalej.
+    // AdMob i tak serwuje wtedy reklamy niespersonalizowane.
+    console.warn("UMP consent flow skipped:", e && e.message);
+  }
+}
+
 async function initNative(){
   if(!isNative || !window.Capacitor.Plugins) return;
   const { AdMob } = window.Capacitor.Plugins;
   if(!AdMob) return;
   try{
+    await requestConsent(AdMob);
     await AdMob.initialize({ initializeForTesting: AD_TESTING });
     await AdMob.showBanner({
       adId: AD_UNIT_BANNER,
@@ -526,6 +552,22 @@ async function buzz(style){
 }
 window.__buzz = buzz;
 window.addEventListener("load", initNative);
+
+// Przycisk "Ustawienia prywatności" — widoczny tylko w apce natywnej.
+if(isNative){
+  const p = document.getElementById("privacyPanel");
+  if(p) p.style.display = "";
+  const btn = document.getElementById("privacyBtn");
+  if(btn) btn.addEventListener("click", async ()=>{
+    const { AdMob } = (window.Capacitor && window.Capacitor.Plugins) || {};
+    if(!AdMob) return;
+    try{
+      // Reset zgody → użytkownik zobaczy formularz UMP ponownie
+      if(AdMob.resetConsentInfo) await AdMob.resetConsentInfo();
+      await requestConsent(AdMob);
+    }catch(e){ console.warn("privacy reopen failed", e); }
+  });
+}
 </script>
 </body>
 </html>
