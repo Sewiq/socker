@@ -2,6 +2,9 @@
 
 Aktualizacja: 16 czerwca 2026 · Wersja: **0.2.0**
 
+> Bieżący stan. Plan kierunkowy projektu (fazy 0→4, multiplayer, turnieje, i18n):
+> **[docs/ROADMAP.md](ROADMAP.md)**
+
 ---
 
 ## ✅ Zrobione
