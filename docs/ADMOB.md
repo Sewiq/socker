@@ -22,19 +22,13 @@ Otwórz `android/app/src/main/AndroidManifest.xml` i wewnątrz znacznika
 
 Bez tego SDK AdMoba **wyrzuci wyjątek przy starcie aplikacji** (znany błąd Google).
 
-## Krok 2 — ad unit (banner)
+## Krok 2 — ad unit (banner) ✅
 
-W panelu [AdMob](https://admob.google.com) → Apps → „Piłkarzyki" → **Ad units** →
-**Create Ad Unit** → **Banner** → nazwij np. „Main banner" → zapisz.
+Utworzony: **Socker_baner** — `ca-app-pub-9793821286854398/6982945977`.
+Wpięty w `www/index.html` jako `AD_UNIT_BANNER`.
 
-Dostaniesz ID w formacie:
-
-```
-ca-app-pub-9793821286854398/XXXXXXXXXX
-```
-
-Wklej go w `www/index.html`, podmieniając stałą `AD_UNIT_BANNER`
-(obecnie zawiera testowe ID Google `ca-app-pub-3940256099942544/6300978111`).
+Jeśli będziesz tworzyć kolejne (interstitial / rewarded), trzymaj się tego samego pliku:
+osobne stałe `AD_UNIT_INTERSTITIAL`, `AD_UNIT_REWARDED`.
 
 ## Krok 3 — wyłącz tryb testowy przed publikacją
 

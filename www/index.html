@@ -497,20 +497,24 @@ if(!isNative && "serviceWorker" in navigator && location.protocol.startsWith("ht
 }
 
 // ---------- integracja natywna (Android via Capacitor) ----------
-// AdMob banner u dołu + lekkie wibracje. Testowe ID Google — podmień przed publikacją.
-const AD_UNIT_BANNER = "ca-app-pub-3940256099942544/6300978111"; // TEST banner
+// AdMob banner u dołu + lekkie wibracje.
+// Produkcyjny ID baneru; tryb testowy (isTesting/initializeForTesting) zostaje TRUE
+// aż do buildu produkcyjnego — Google wymaga tego do testów, klikanie własnych
+// prawdziwych reklam = blokada konta.
+const AD_UNIT_BANNER = "ca-app-pub-9793821286854398/6982945977"; // Socker_baner
+const AD_TESTING = true; // przed releasem → false
 async function initNative(){
   if(!isNative || !window.Capacitor.Plugins) return;
   const { AdMob } = window.Capacitor.Plugins;
   if(!AdMob) return;
   try{
-    await AdMob.initialize({ initializeForTesting: true });
+    await AdMob.initialize({ initializeForTesting: AD_TESTING });
     await AdMob.showBanner({
       adId: AD_UNIT_BANNER,
       adSize: "ADAPTIVE_BANNER",
       position: "BOTTOM_CENTER",
       margin: 0,
-      isTesting: true
+      isTesting: AD_TESTING
     });
   }catch(e){ console.warn("AdMob init failed", e); }
 }
