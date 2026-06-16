@@ -60,9 +60,13 @@ Aktualizacja: 16 czerwca 2026 · Wersja: **0.2.0**
 - [x] **`storage.js`** — jeden punkt dostępu, `PlayerProfile` (UUID, schemaVersion),
   `GameRecord` (historia), statystyki jako pochodna historii, XP/level, migracje
 - [x] **Dev server** — `npm run dev` / `dev:lan` (iteracja w przeglądarce bez APK)
-- [ ] Ekran profilu (nick + flaga) — następny krok
-- [ ] Ekran statystyk — po profilu
-- [ ] XP/level widoczne w UI — po profilu
+- [x] **Ekran profilu** — nick + wybór flagi (picker ~190 krajów, nazwy via
+  `Intl.DisplayNames`, flagi emoji), badge poziomu + pasek XP
+- [x] **Ekran statystyk** — wygrane/przegrane/skuteczność/serie, rozbicie per
+  poziom bota, gole/blokady, reset — liczone z `GameRecord[]`
+- [x] **XP/level w UI** — flaga w topbarze, pasek postępu w profilu
+- [ ] Mocniejszy bot (minimaks) — opcjonalnie
+- [ ] Faza 2: multiplayer online
 
 ### Dokumentacja
 - [x] `README.md` — przegląd projektu
