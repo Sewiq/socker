@@ -4,6 +4,7 @@ Mobilna wersja papierowej gry "piłkarzyki na kartce", przeznaczona do sklepu Go
 Gra jest darmowa i wyświetla reklamy Google AdMob (banner u dołu, opcjonalny interstitial).
 
 📊 **[Status projektu — co zrobione, co w planach →](docs/STATUS.md)**
+⚡ **[Iteracja w przeglądarce — `npm run dev` →](docs/DEV.md)**
 
 Cały silnik gry żyje w `www/` jako zwykła PWA (HTML/CSS/JS, bez bibliotek).
 **Capacitor** opakowuje to w natywne APK/AAB, a plugin
