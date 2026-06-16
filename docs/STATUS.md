@@ -68,6 +68,7 @@ Aktualizacja: 16 czerwca 2026 · Wersja: **0.2.0**
 - [x] **Ekran statystyk** — wygrane/przegrane/skuteczność/serie, rozbicie per
   poziom bota, gole/blokady, reset — liczone z `GameRecord[]`
 - [x] **XP/level w UI** — flaga w topbarze, pasek postępu w profilu
+- [x] **Bot adaptacyjny (Auto)** — dopasowuje poziom do wyników gracza (rubber-band z historii `storage.js`)
 - [ ] Mocniejszy bot (minimaks) — opcjonalnie
 - [ ] Faza 2: multiplayer online
 

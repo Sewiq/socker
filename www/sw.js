@@ -1,5 +1,5 @@
 // Service worker — gra działa offline po pierwszym otwarciu.
-const CACHE = "pilkarzyki-v7";
+const CACHE = "pilkarzyki-v8";
 const ASSETS = [
   "./",
   "./index.html",

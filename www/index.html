@@ -50,6 +50,8 @@
   .settings-pop .lbl-small{display:block;font-size:11px;color:#6b7a96;font-weight:700;
     text-transform:uppercase;letter-spacing:.6px;margin:0 0 5px}
   .settings-pop .seg-group+.seg-group{margin-top:10px}
+  .auto-hint{font-size:11px;color:#6b7a96;margin-top:6px;line-height:1.4}
+  .auto-hint b{color:var(--ink2)}
 
   /* STATUS — jednolinijkowy: kropka • tura • wynik */
   .status{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;
@@ -201,7 +203,9 @@
           <button data-diff="easy" data-i18n="settings.levelEasy">Łatwy</button>
           <button data-diff="medium" class="on" data-i18n="settings.levelMedium">Średni</button>
           <button data-diff="hard" data-i18n="settings.levelHard">Trudny</button>
+          <button data-diff="auto" data-i18n="settings.levelAuto">Auto</button>
         </div>
+        <div class="auto-hint" id="autoHint" hidden><span data-i18n="settings.autoHint">Dopasowuje poziom do Twoich wyników</span> · <b id="autoNow"></b></div>
       </div>
       <div class="seg-group">
         <span class="lbl-small" data-i18n="settings.language">Język</span>
@@ -414,7 +418,24 @@ function undo(){
   state.startTs=s.startTs;state.starter=s.starter;state.recorded=s.recorded;
   render();
 }
-function newGame(){state=freshState();history=[];busy=false;hideEndModal();render();}
+function newGame(){
+  state=freshState();history=[];busy=false;hideEndModal();
+  // ustal poziom faktyczny gry (dla auto liczony raz na start)
+  state.effDiff = (mode==="bot") ? (diff==="auto" ? autoDifficulty() : diff) : null;
+  refreshAutoHint();
+  render();
+}
+function refreshAutoHint(){
+  const hint=document.getElementById("autoHint");
+  if(!hint) return;
+  const show = (mode==="bot" && diff==="auto");
+  hint.hidden = !show;
+  if(show){
+    const ed = (state && state.effDiff) ? state.effDiff : autoDifficulty();
+    const lvlName = i18n.t(ed==="hard"?"settings.levelHard":ed==="medium"?"settings.levelMedium":"settings.levelEasy");
+    document.getElementById("autoNow").textContent = lvlName;
+  }
+}
 
 function applyMove(m,by){
   const d0=degreeOf(m,state.used);
@@ -467,10 +488,28 @@ function botHasWinningChain(ball,used,depth,cnt){
   }
   return false;
 }
+const LEVELS=["easy","medium","hard"];
+// Adaptacyjny poziom: czyta historię vs bot ze storage.js i dopasowuje trudność.
+// Rubber-band: 2 wygrane gracza z rzędu → trudniej, 2 przegrane → łatwiej.
+function autoDifficulty(){
+  if(!window.storage) return "medium";
+  const recs = storage.getGameRecords().filter(r=>r.mode==="bot");
+  if(!recs.length) return "medium";
+  let idx = LEVELS.indexOf(recs[0].difficulty);
+  if(idx<0) idx=1;                                  // baseline = poziom ostatniej gry
+  const won0 = recs[0].winner===1;                 // gracz = 1
+  const won1 = recs[1] ? recs[1].winner===1 : null;
+  if(won0 && won1===true) idx=Math.min(2, idx+1);
+  else if(!won0 && won1===false) idx=Math.max(0, idx-1);
+  return LEVELS[idx];
+}
+// Poziom faktycznie użyty w bieżącej grze (dla auto wyliczony raz na start).
+function effectiveDiff(){ return (state && state.effDiff) ? state.effDiff : (diff==="auto" ? "medium" : diff); }
+
 function botPick(){
   const legal=legalMoves(state.ball,state.used);
-  const searchDepth = diff==="hard"?18 : diff==="medium"?13 : 6;
-  const searchBudget = diff==="hard"?9000 : 5000;
+  const ed = effectiveDiff();
+  const searchDepth = ed==="hard"?18 : ed==="medium"?13 : 6;
   let best=null,bs=-Infinity;
   for(const m of legal){
     let s;
@@ -481,16 +520,16 @@ function botPick(){
       s = m[1]*100 - Math.abs(m[0]-4)*12;     // bliżej dolnej bramki + środek
       if(bounce) s += 300;                    // odbicia = dodatkowe ruchy
 
-      if(diff!=="easy"){                      // nie oddawaj gola rywalowi
+      if(ed!=="easy"){                         // nie oddawaj gola rywalowi
         const u=new Set(state.used);u.add(ek(state.ball,m));
         if(!bounce && canScore(m,u,true,searchDepth,{n:0})) s -= 1e9;
 
         // TRUDNY: sprawdź czy MY mamy łańcuch wygrywający z tego pola
-        if(diff==="hard" && bounce){
+        if(ed==="hard" && bounce){
           if(botHasWinningChain(m,u,searchDepth,{n:0})) s += 5e11;
         }
       }
-      const noise = diff==="easy"?60 : diff==="hard"?2 : 8;
+      const noise = ed==="easy"?60 : ed==="hard"?2 : 8;
       s += Math.random()*noise;
     }
     if(s>bs){bs=s;best=m;}
@@ -661,11 +700,11 @@ function recordWin(p){
     state.recorded = true;
     storage.saveGameRecord({
       mode,
-      difficulty: mode==="bot" ? diff : null,
+      difficulty: mode==="bot" ? (state.effDiff || diff) : null,  // faktyczny poziom (dla auto wyliczony)
       winner: p,
       reason: state.winReason || "goal",
       duration: state.startTs ? Math.round((Date.now()-state.startTs)/1000) : 0,
-      meta: { starter: state.starter, moves: state.moves, boardW: W, boardH: H }
+      meta: { starter: state.starter, moves: state.moves, boardW: W, boardH: H, auto: diff==="auto" }
     });
   }
   setTimeout(()=>showEndModal(p), 350);
@@ -726,6 +765,7 @@ i18n.onChange(()=>{
   renderScore();
   if(state) updateStatus();
   refreshProfileButton();
+  refreshAutoHint();
   // jeśli któryś sheet otwarty — przerysuj zlokalizowane treści
   if(!document.getElementById("profileModal").hidden) openProfile(true);
   if(!document.getElementById("flagModal").hidden) renderFlagGrid();
