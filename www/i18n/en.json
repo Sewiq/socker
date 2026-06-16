@@ -1,0 +1,61 @@
+{
+  "app.title": "Paper Football",
+  "app.subtitle": "Score a goal in your opponent's net. Bouncing off a wall or an occupied dot lets you keep playing.",
+
+  "settings.mode": "Mode",
+  "settings.modeBot": "vs Bot",
+  "settings.mode2p": "2 players",
+  "settings.level": "Difficulty",
+  "settings.levelEasy": "Easy",
+  "settings.levelMedium": "Medium",
+  "settings.levelHard": "Hard",
+  "settings.language": "Language",
+
+  "actions.newGame": "New game",
+  "actions.undo": "Undo",
+  "actions.rematch": "Rematch",
+  "actions.close": "Close",
+  "actions.resetScore": "Reset score",
+  "actions.privacy": "Privacy settings (ad consent)",
+
+  "legend.p1": "Player 1 (blue / You)",
+  "legend.p2": "Player 2 (red / Bot)",
+  "legend.lastMove": "last move",
+
+  "player.you": "You",
+  "player.bot": "Bot",
+  "player.botThinking": "Bot thinking…",
+  "player.p1": "Player 1",
+  "player.p2": "Player 2",
+
+  "color.blueUpper": "BLUE",
+  "color.redUpper": "RED",
+  "color.blueLower": "blue",
+  "color.redLower": "red",
+
+  "goal.upper": "top",
+  "goal.lower": "bottom",
+
+  "status.turn": "Turn: {who} ({color}) — to the {goal} goal",
+  "status.bounce": "🔁 Bounce — keep playing!",
+  "status.gameOver": "Game over",
+  "status.bannerWin": "🏆 {color} player ({name}) wins — {reason}",
+  "status.reasonBlock": "opponent is blocked — no legal move!",
+  "status.reasonGoal": "GOAL! 🥅",
+
+  "end.titleYouWin": "You win!",
+  "end.titleBotWin": "Bot wins",
+  "end.titleWin": "{name} wins",
+  "end.subBlock": "Opponent is blocked — no legal move.",
+  "end.subGoal": "Goal! 🥅",
+  "end.subPlayer": " ({color} player)",
+
+  "rules.title": "Rules",
+  "rules.rule1": "<b>1. One line per turn</b> — from the ball to an adjacent dot, straight or diagonal.",
+  "rules.rule2": "<b>2. No line twice</b> — lines never repeat; you can't slide along the wall.",
+  "rules.rule3": "<b>3. Bounce = extra move</b> — landing on an occupied dot or a wall → you move again.",
+  "rules.rule4": "<b>4. End of game</b> — first goal wins. Whoever gets <b>blocked</b> (no legal move on their turn) loses.",
+  "rules.intro": "The <b>blue</b> player (You) shoots into the <b>top</b> goal; the <b>red</b> player (Bot) shoots into the <b>bottom</b>.",
+
+  "foot.signature": "⚽ Paper Football · Seweryn Chorzewski"
+}
