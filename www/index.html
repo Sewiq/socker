@@ -46,6 +46,12 @@
   .chip{width:16px;height:16px;border-radius:50%;flex:0 0 auto;border:2px solid #fff;box-shadow:0 0 0 1px #ccc}
   .bounce{margin-left:auto;font-size:13px;color:var(--ball-ring);font-weight:700;opacity:0;transition:opacity .2s}
   .bounce.show{opacity:1}
+  .score{display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;font-weight:700;
+    padding:8px 12px;border-radius:12px;background:#fff;border:1px solid #e2e7ef;margin-bottom:10px}
+  .score b{font-size:20px;color:var(--ink);min-width:18px;display:inline-block;text-align:center}
+  .score-side{display:inline-flex;align-items:center;gap:6px}
+  .score-sep{color:#9fb3cf}
+  .score-reset{margin-left:auto;padding:4px 9px;font-size:13px;line-height:1}
   .banner{display:none;margin-top:10px;padding:12px;border-radius:12px;text-align:center;
     font-weight:700;font-size:16px}
   .banner.win1{display:block;background:#e9f2ff;color:var(--ink);border:1px solid #bcd3f3}
@@ -81,6 +87,7 @@
       <div class="seg" id="diffSeg">
         <button data-diff="easy">Łatwy</button>
         <button data-diff="medium" class="on">Średni</button>
+        <button data-diff="hard">Trudny</button>
       </div>
     </div>
     <div class="row" style="margin-top:10px">
@@ -98,6 +105,13 @@
     <span class="chip" id="turnChip"></span>
     <span id="turnText">—</span>
     <span class="bounce" id="bounceTag">🔁 Odbicie — grasz dalej!</span>
+  </div>
+
+  <div class="score" id="scorePanel">
+    <span class="score-side"><i class="sw" style="background:var(--ink)"></i><span id="scoreLbl1">Ty</span>: <b id="score1">0</b></span>
+    <span class="score-sep">—</span>
+    <span class="score-side"><b id="score2">0</b> :<span id="scoreLbl2">Bot</span><i class="sw" style="background:var(--ink2)"></i></span>
+    <button class="btn score-reset" id="scoreReset" title="Wyzeruj wynik">↺</button>
   </div>
 
   <svg id="board" class="board" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -199,16 +213,20 @@ function applyMove(m,by){
   state.edges.push({a:state.ball.slice(),b:m.slice(),p:by});
   state.ball=m.slice();
   state.moves++;
-  if(isTopGoal(m)){state.winner=1;state.winReason="goal";return;}
-  if(isBotGoal(m)){state.winner=2;state.winReason="goal";return;}
+  if(isTopGoal(m)){state.winner=1;state.winReason="goal";recordWin(1);buzzSafe("Heavy");return;}
+  if(isBotGoal(m)){state.winner=2;state.winReason="goal";recordWin(2);buzzSafe("Heavy");return;}
   const bounce=d0>=1;
   state.bounce=bounce;
+  if(bounce) buzzSafe("Light");
   if(!bounce)state.player=by===1?2:1;
   if(legalMoves(state.ball,state.used).length===0){   // brak ruchu = przegrana
     state.winner=state.player===1?2:1;
     state.winReason="block";
+    recordWin(state.winner);
+    buzzSafe("Heavy");
   }
 }
+function buzzSafe(s){ if(window.__buzz) window.__buzz(s); }
 
 // ---------- bot ----------
 function canScore(ball,used,wantTop,depth,cnt){
@@ -225,8 +243,25 @@ function canScore(ball,used,wantTop,depth,cnt){
   }
   return false;
 }
+// czy bot ma w aktualnej turze (po łańcuchu odbić) wygraną?
+function botHasWinningChain(ball,used,depth,cnt){
+  if(cnt.n++>6000||depth<=0)return false;
+  for(const m of legalMoves(ball,used)){
+    if(isBotGoal(m))return true;
+    if(isTopGoal(m))continue;
+    if(degreeOf(m,used)>=1){
+      const e=ek(ball,m);used.add(e);
+      const r=botHasWinningChain(m,used,depth-1,cnt);
+      used.delete(e);
+      if(r)return true;
+    }
+  }
+  return false;
+}
 function botPick(){
   const legal=legalMoves(state.ball,state.used);
+  const searchDepth = diff==="hard"?18 : diff==="medium"?13 : 6;
+  const searchBudget = diff==="hard"?9000 : 5000;
   let best=null,bs=-Infinity;
   for(const m of legal){
     let s;
@@ -234,13 +269,20 @@ function botPick(){
     else if(isTopGoal(m)) s=-1e12;           // gol samobójczy
     else{
       const bounce=degreeOf(m,state.used)>=1;
-      s=m[1]*100 - Math.abs(m[0]-4)*12;      // bliżej dolnej bramki + środek
-      if(bounce)s+=300;                       // odbicia = dodatkowe ruchy
-      if(!bounce && diff==="medium"){         // nie oddawaj gola rywalowi
+      s = m[1]*100 - Math.abs(m[0]-4)*12;     // bliżej dolnej bramki + środek
+      if(bounce) s += 300;                    // odbicia = dodatkowe ruchy
+
+      if(diff!=="easy"){                      // nie oddawaj gola rywalowi
         const u=new Set(state.used);u.add(ek(state.ball,m));
-        if(canScore(m,u,true,13,{n:0}))s-=1e9;
+        if(!bounce && canScore(m,u,true,searchDepth,{n:0})) s -= 1e9;
+
+        // TRUDNY: sprawdź czy MY mamy łańcuch wygrywający z tego pola
+        if(diff==="hard" && bounce){
+          if(botHasWinningChain(m,u,searchDepth,{n:0})) s += 5e11;
+        }
       }
-      s+= (diff==="easy"?Math.random()*60:Math.random()*8);
+      const noise = diff==="easy"?60 : diff==="hard"?2 : 8;
+      s += Math.random()*noise;
     }
     if(s>bs){bs=s;best=m;}
   }
@@ -355,6 +397,7 @@ document.getElementById("modeSeg").addEventListener("click",e=>{
   [...e.currentTarget.children].forEach(c=>c.classList.toggle("on",c===b));
   document.getElementById("diffLbl").style.display=mode==="bot"?"":"none";
   document.getElementById("diffSeg").style.display=mode==="bot"?"":"none";
+  renderScore();
   newGame();
 });
 document.getElementById("diffSeg").addEventListener("click",e=>{
@@ -365,6 +408,33 @@ document.getElementById("diffSeg").addEventListener("click",e=>{
 });
 document.getElementById("newBtn").addEventListener("click",newGame);
 document.getElementById("undoBtn").addEventListener("click",undo);
+document.getElementById("scoreReset").addEventListener("click",()=>{
+  score={bot:{p1:0,p2:0},"2p":{p1:0,p2:0}};
+  saveScore();renderScore();
+});
+
+// ---------- wynik (localStorage) ----------
+let score = loadScore();
+function loadScore(){
+  try{ return JSON.parse(localStorage.getItem("pilkarzyki.score")) || {bot:{p1:0,p2:0},"2p":{p1:0,p2:0}}; }
+  catch(e){ return {bot:{p1:0,p2:0},"2p":{p1:0,p2:0}}; }
+}
+function saveScore(){
+  try{ localStorage.setItem("pilkarzyki.score", JSON.stringify(score)); }catch(e){}
+}
+function recordWin(p){
+  const b = score[mode] || (score[mode]={p1:0,p2:0});
+  if(p===1) b.p1++; else b.p2++;
+  saveScore();renderScore();
+}
+function renderScore(){
+  const b = score[mode] || {p1:0,p2:0};
+  document.getElementById("score1").textContent = b.p1;
+  document.getElementById("score2").textContent = b.p2;
+  document.getElementById("scoreLbl1").textContent = mode==="bot"?"Ty":"Gracz 1";
+  document.getElementById("scoreLbl2").textContent = mode==="bot"?"Bot":"Gracz 2";
+}
+renderScore();
 
 newGame();
 
