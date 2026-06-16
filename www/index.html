@@ -502,21 +502,6 @@ function canScore(ball,used,wantTop,depth,cnt){
   }
   return false;
 }
-// czy bot ma w aktualnej turze (po łańcuchu odbić) wygraną?
-function botHasWinningChain(ball,used,depth,cnt){
-  if(cnt.n++>6000||depth<=0)return false;
-  for(const m of legalMoves(ball,used)){
-    if(isBotGoal(m))return true;
-    if(isTopGoal(m))continue;
-    if(degreeOf(m,used)>=1){
-      const e=ek(ball,m);used.add(e);
-      const r=botHasWinningChain(m,used,depth-1,cnt);
-      used.delete(e);
-      if(r)return true;
-    }
-  }
-  return false;
-}
 const LEVELS=["easy","medium","hard"];
 // Adaptacyjny poziom: czyta historię vs bot ze storage.js i dopasowuje trudność.
 // Rubber-band: 2 wygrane gracza z rzędu → trudniej, 2 przegrane → łatwiej.
@@ -569,261 +554,26 @@ function botPick(){
 
 // ====== Minimaks α-β po pełnych turach (poziom Trudny / Auto-hard) ======
 //
-// Klucz: w piłkarzykach OD­BICIE = ten sam gracz gra dalej. Naiwny minimaks
-// per ruch myli się o znak — trzeba przeszukiwać pełne TURY (sekwencje ruchów
-// jednego gracza zakończone „nie-odbiciem"). To miało robić zostawione
-// botHasWinningChain, ale tylko dla pojedynczego scenariusza. Tu jest pełny
-// silnik z oceną pozycyjną dla pozycji w których nikt jeszcze nie wygrał.
+// Klucz: w piłkarzykach ODBICIE = ten sam gracz gra dalej. Naiwny minimaks per
+// ruch myli się o znak — trzeba przeszukiwać pełne TURY (sekwencje ruchów jednego
+// gracza zakończone „nie-odbiciem").
 //
-// Konwencja: max gracza 2 (bot strzela do DOLNEJ bramki, y=H+1).
-//   wygrana bota → +∞ (skala 1e9), wygrana gracza → -∞.
-//   ocena pozycyjna (gdy gra trwa) skaluje się w setkach.
+// WAŻNE: ten silnik jest CZYSTO FUNKCYJNY. NIGDY nie mutuje żywego `state`.
+// Pracuje wyłącznie na klonach (snapshotach) — każdy ruch tworzy nowy snapshot
+// przez ENG.applyMove na kopii. Dzięki temu przeszukiwanie nie może uszkodzić
+// prawdziwej planszy (poprzednia wersja z do/undo to robiła — stąd „plątanina linii").
+//
+// Konwencja: max = bot (gracz 2, strzela do DOLNEJ bramki). Gol bota = +∞,
+// gol gracza = -∞. Bot zwraca POJEDYNCZY pierwszy ruch; pętla botTurn aplikuje go
+// do prawdziwego stanu, a przy odbiciu woła botPick znów (łańcuch sam się składa).
 
 const MM_INF = 1e9;
-const MM_TIME_BUDGET_MS = 600;     // łączny budżet myślenia na ruch
-const MM_NODE_BUDGET    = 60000;   // twardy limit węzłów na bezpieczeństwo
+const MM_TIME_BUDGET_MS = 500;
+const MM_NODE_BUDGET = 40000;
+const MM_MAX_DEPTH = 4;
 
-// Ile pełnych „tur" w przód patrzymy przy iterative deepening.
-// Każda tura to potencjalnie wiele ruchów (odbicia), więc to drogie.
-const MM_MAX_DEPTH = 5;
-
-// Ocena pozycyjna stanu (z perspektywy „bot=2" — wyższe = lepsze dla bota).
-// Heurystyka: progres piłki do dolnej bramki + kontrola środka + mobilność.
-function mmEvaluate(s){
-  // y=0 to góra, y=H+1 to dół. Bot chce w dół.
-  const yDown = s.ball[1];                       // 0..H+1
-  const dxCenter = Math.abs(s.ball[0] - 4);      // im bliżej środka tym lepiej
-  const mob = legalMoves(s.ball, s.used).length; // im więcej opcji tym lepiej
-  // Im bliżej swojej bramki tym MOCNO lepiej (kwadratowo, bo bramka 2 oczka).
-  const goalPull = yDown * yDown * 0.8;
-  // Lekki bonus za środek (mniej narażony na pułapki przy bandach).
-  const centerBonus = -dxCenter * 1.5;
-  // Mobilność: dużo opcji = elastyczność.
-  const mobBonus = mob * 4;
-  // Jeśli gracz akurat jest na turze (s.player===1), pozycja jest gorsza dla bota.
-  const turnPenalty = s.player === 1 ? -8 : 0;
-  return goalPull + centerBonus + mobBonus + turnPenalty;
-}
-
-// Generuj wszystkie możliwe „pełne tury" gracza `by` z aktualnej pozycji.
-// Zwraca tablicę {firstMove, finalState, won, lost} gdzie firstMove to ruch
-// do wykonania, finalState to stan po całej turze (sekwencji odbić aż do końca),
-// won=1 jeśli gracz `by` strzelił gola w tej turze, lost=1 jeśli sam się zablokował
-// lub strzelił do siebie.
-// Zwracamy tylko TOP-N najobiecujących pierwszych ruchów (dla głębokości).
-function mmExpandTurns(s, by, ctx, topN){
-  const out = [];
-  const legal = legalMoves(s.ball, s.used);
-  for(const m of legal){
-    if(ctx.nodes++ > MM_NODE_BUDGET) break;
-    if(performance.now() > ctx.deadline) break;
-    // szybki filtr: nigdy nie strzelaj do własnej bramki
-    if(by===2 && isTopGoal(m)) continue;
-    if(by===1 && isBotGoal(m)) continue;
-
-    // Symuluj jeden ruch (mutacja + cofnięcie)
-    const undo = mmDoMove(s, m, by);
-    if(s.winner){
-      // gol / blokada — koniec partii w tej tureie
-      const won = (s.winner === by) ? 1 : 0;
-      const eval0 = (by===2)
-        ? (s.winner===2 ? +MM_INF : -MM_INF)
-        : (s.winner===1 ? -MM_INF : +MM_INF); // z perspektywy bota
-      out.push({ firstMove: m, finalEval: eval0, terminal: true });
-      mmUndoMove(s, undo);
-      continue;
-    }
-    if(s.bounce && s.player === by){
-      // odbicie — ten sam gracz kontynuuje turę: rekurencyjnie dokończ TĘ turę
-      // BEZ zapisywania pierwszego ruchu (zapisujemy w out tylko TOP-level).
-      const sub = mmFinishTurn(s, by, ctx);
-      out.push({ firstMove: m, finalState: cloneSnap(s), finalEval: sub.eval, terminal: sub.terminal });
-      mmUndoMove(s, undo);
-      continue;
-    }
-    // koniec tury — przeciwnik na ruchu
-    out.push({ firstMove: m, finalState: cloneSnap(s), finalEval: null, terminal: false });
-    mmUndoMove(s, undo);
-  }
-  // Posortuj wstępnie heurystyką: terminalne wygrane na początek dla lepszego α-β
-  out.sort((a,b)=>{
-    const av = a.finalEval==null ? 0 : a.finalEval;
-    const bv = b.finalEval==null ? 0 : b.finalEval;
-    return (by===2 ? bv-av : av-bv);
-  });
-  return topN ? out.slice(0, topN) : out;
-}
-
-// W trakcie tury: wykonaj GREEDY-najlepszy łańcuch odbić aż do końca tury,
-// wracając ocenę i informację czy terminalna. Greedy bo eksploracja całego
-// drzewa odbić eksploduje — tu wystarcza, bo łańcuchy w realnych pozycjach
-// są zwykle krótkie, a krytyczne (winning chain) i tak są wykrywane przez
-// szybki test goal-immediate w mmExpandTurns gdy ruch terminalny.
-function mmFinishTurn(s, by, ctx){
-  let depth = 0;
-  while(depth++ < 40){
-    if(ctx.nodes++ > MM_NODE_BUDGET) return { eval: mmEvaluate(s), terminal: false };
-    if(performance.now() > ctx.deadline) return { eval: mmEvaluate(s), terminal: false };
-    if(s.winner){
-      const v = (s.winner === by) ? +MM_INF : -MM_INF;
-      return { eval: by===2 ? v : -v, terminal: true };
-    }
-    if(s.player !== by) return { eval: mmEvaluate(s), terminal: false };
-    // dalej trwa tura (odbicie). Wybierz najlepszy ruch heurystycznie:
-    const legal = legalMoves(s.ball, s.used);
-    if(!legal.length){
-      // blokada — ten kto był na turze przegrywa (silnik już to ustawi w applyMove,
-      // ale tu jesteśmy po samym sprawdzeniu)
-      return { eval: by===2 ? -MM_INF : +MM_INF, terminal: true };
-    }
-    // priorytet: gol bota / unik gola samobójczego / dalsze odbicie / blisko bramki
-    let bestM = null, bestS = -Infinity;
-    for(const m of legal){
-      let sc;
-      if(by===2 && isBotGoal(m)) sc = 1e12;
-      else if(by===2 && isTopGoal(m)) sc = -1e12;
-      else if(by===1 && isTopGoal(m)) sc = 1e12;
-      else if(by===1 && isBotGoal(m)) sc = -1e12;
-      else{
-        const bounce = degreeOf(m, s.used) >= 1;
-        sc = (by===2 ? m[1] : -m[1]) * 100;
-        if(bounce) sc += 200;
-        sc -= Math.abs(m[0]-4) * 5;
-      }
-      if(sc > bestS){ bestS = sc; bestM = m; }
-    }
-    if(!bestM) return { eval: mmEvaluate(s), terminal: false };
-    mmDoMove(s, bestM, by);
-  }
-  return { eval: mmEvaluate(s), terminal: false };
-}
-
-// minimaks α-β na poziomie TUR. Każda iteracja zmienia stronę (po nie-odbiciu).
-function mmSearch(s, depth, alpha, beta, ctx){
-  if(s.winner){
-    return s.winner===2 ? +MM_INF : -MM_INF;
-  }
-  if(depth <= 0) return mmEvaluate(s);
-  if(ctx.nodes++ > MM_NODE_BUDGET || performance.now() > ctx.deadline){
-    ctx.cutoff = true;
-    return mmEvaluate(s);
-  }
-
-  const by = s.player;
-  const turns = mmExpandTurns(s, by, ctx, /*topN=*/depth>=3 ? 6 : 12);
-  if(!turns.length) return mmEvaluate(s);
-
-  if(by === 2){
-    let value = -Infinity;
-    for(const t of turns){
-      let v;
-      if(t.terminal){
-        v = t.finalEval;
-      }else{
-        // wejdź w stan po turze (deserializuj i przeszukaj)
-        const saved = cloneSnap(s);
-        applySnap(s, t.finalState);
-        v = mmSearch(s, depth-1, alpha, beta, ctx);
-        applySnap(s, saved);
-      }
-      if(v > value) value = v;
-      if(value > alpha) alpha = value;
-      if(alpha >= beta) break;     // β-cutoff
-    }
-    return value;
-  } else {
-    let value = +Infinity;
-    for(const t of turns){
-      let v;
-      if(t.terminal){
-        v = t.finalEval;
-      }else{
-        const saved = cloneSnap(s);
-        applySnap(s, t.finalState);
-        v = mmSearch(s, depth-1, alpha, beta, ctx);
-        applySnap(s, saved);
-      }
-      if(v < value) value = v;
-      if(value < beta) beta = value;
-      if(alpha >= beta) break;     // α-cutoff
-    }
-    return value;
-  }
-}
-
-// Wybór najlepszego ruchu dla bota (gracza 2) z root-pozycji `s`.
-// Iterative deepening: zaczynaj od głębokości 1, zwiększaj aż budżet pozwala.
-function mmPickBest(s, by){
-  const ctx = { nodes: 0, deadline: performance.now() + MM_TIME_BUDGET_MS, cutoff: false };
-  let best = null;
-  let bestEval = -Infinity;
-
-  for(let d = 1; d <= MM_MAX_DEPTH; d++){
-    if(performance.now() > ctx.deadline) break;
-    const turns = mmExpandTurns(s, by, ctx, 12);
-    if(!turns.length) break;
-
-    let levelBest = null, levelEval = -Infinity;
-    let alpha = -Infinity, beta = +Infinity;
-    for(const t of turns){
-      let v;
-      if(t.terminal){
-        v = t.finalEval;
-      }else{
-        const saved = cloneSnap(s);
-        applySnap(s, t.finalState);
-        v = mmSearch(s, d-1, alpha, beta, ctx);
-        applySnap(s, saved);
-      }
-      if(v > levelEval){ levelEval = v; levelBest = t.firstMove; }
-      if(levelEval > alpha) alpha = levelEval;
-      if(performance.now() > ctx.deadline) break;
-    }
-    if(levelBest){ best = levelBest; bestEval = levelEval; }
-    if(ctx.cutoff) break;       // budżet wyczerpany w trakcie — kończymy
-    if(bestEval >= MM_INF/2) break;  // znaleziony pewny gol — nie szukaj dalej
-  }
-  return best;
-}
-
-// --- helpery: szybkie do/undo ruchu bez tworzenia nowej Set za każdym razem ---
-function mmDoMove(s, m, by){
-  const e = ek(s.ball, m);
-  const prevBall = s.ball;
-  const prevPlayer = s.player;
-  const prevBounce = s.bounce;
-  const prevWinner = s.winner;
-  const prevReason = s.winReason;
-  const prevMoves = s.moves;
-  const d0 = degreeOf(m, s.used);
-  s.used.add(e);
-  s.edges.push({a: prevBall, b: m, p: by});
-  s.ball = m;
-  s.moves++;
-  if(isTopGoal(m)){ s.winner=1; s.winReason="goal"; }
-  else if(isBotGoal(m)){ s.winner=2; s.winReason="goal"; }
-  else{
-    const bounce = d0 >= 1;
-    s.bounce = bounce;
-    if(!bounce) s.player = by===1?2:1;
-    if(legalMoves(s.ball, s.used).length===0){
-      s.winner = s.player===1?2:1;
-      s.winReason = "block";
-    }
-  }
-  return { e, prevBall, prevPlayer, prevBounce, prevWinner, prevReason, prevMoves };
-}
-function mmUndoMove(s, u){
-  s.used.delete(u.e);
-  s.edges.pop();
-  s.ball = u.prevBall;
-  s.player = u.prevPlayer;
-  s.bounce = u.prevBounce;
-  s.winner = u.prevWinner;
-  s.winReason = u.prevReason;
-  s.moves = u.prevMoves;
-}
-function cloneSnap(s){
+// snapshot kompatybilny z ENG.applyMove (ball, used:Set, edges, player, winner, ...)
+function mmSnap(s){
   return {
     ball: s.ball.slice(), used: new Set(s.used),
     edges: s.edges.map(e=>({a:e.a.slice(), b:e.b.slice(), p:e.p})),
@@ -831,12 +581,112 @@ function cloneSnap(s){
     bounce: s.bounce, moves: s.moves
   };
 }
-function applySnap(s, snap){
-  s.ball = snap.ball.slice();
-  s.used = new Set(snap.used);
-  s.edges = snap.edges.map(e=>({a:e.a.slice(), b:e.b.slice(), p:e.p}));
-  s.player = snap.player; s.winner = snap.winner; s.winReason = snap.winReason;
-  s.bounce = snap.bounce; s.moves = snap.moves;
+// jeden ruch na KOPII → nowy snapshot
+function mmApply(snap, m, by){
+  const s = mmSnap(snap);
+  ENG.applyMove(s, m, by);
+  return s;
+}
+// ocena pozycyjna (z perspektywy bota=2; wyżej = lepiej dla bota)
+function mmEvaluate(s){
+  const yDown = s.ball[1];                          // 0 (góra) .. H+1 (dół = cel bota)
+  const dxCenter = Math.abs(s.ball[0] - 4);
+  const mob = legalMoves(s.ball, s.used).length;
+  const goalPull = yDown * yDown * 0.8;             // kwadratowo bliżej dolnej bramki
+  const centerBonus = -dxCenter * 1.5;
+  const mobBonus = mob * 4;
+  const turnPenalty = s.player === 1 ? -8 : 0;      // przeciwnik na ruchu = gorzej
+  return goalPull + centerBonus + mobBonus + turnPenalty;
+}
+function mmQuick(s){
+  if(s.winner===2) return MM_INF;
+  if(s.winner===1) return -MM_INF;
+  return mmEvaluate(s);
+}
+// dokończ turę gracza `by` (gdy odbicie trzyma go na ruchu) — greedy, na kopiach
+function mmFinishTurn(snap, by, ctx){
+  let s = snap, guard = 0;
+  while(!s.winner && s.player === by && guard++ < 40){
+    if(ctx.nodes++ > MM_NODE_BUDGET || performance.now() > ctx.deadline) break;
+    const legal = legalMoves(s.ball, s.used);
+    if(!legal.length) break;
+    let bestM = null, bestSc = -Infinity;
+    for(const m of legal){
+      let sc;
+      if(by===2 && isBotGoal(m)) sc = 1e12;
+      else if(by===2 && isTopGoal(m)) sc = -1e12;
+      else if(by===1 && isTopGoal(m)) sc = 1e12;
+      else if(by===1 && isBotGoal(m)) sc = -1e12;
+      else { const bounce = degreeOf(m,s.used)>=1; sc = (by===2?m[1]:-m[1])*100 + (bounce?200:0) - Math.abs(m[0]-4)*5; }
+      if(sc > bestSc){ bestSc = sc; bestM = m; }
+    }
+    if(!bestM) break;
+    s = mmApply(s, bestM, by);
+  }
+  return s;
+}
+// wszystkie pierwsze ruchy → snapshoty po PEŁNEJ turze
+function mmExpandTurns(snap, by, ctx, topN){
+  const out = [];
+  const legal = legalMoves(snap.ball, snap.used);
+  for(const m of legal){
+    if(ctx.nodes++ > MM_NODE_BUDGET || performance.now() > ctx.deadline) break;
+    if(by===2 && isTopGoal(m)) continue;     // nie strzelaj do siebie
+    if(by===1 && isBotGoal(m)) continue;
+    let s = mmApply(snap, m, by);
+    if(!s.winner && s.bounce && s.player === by) s = mmFinishTurn(s, by, ctx);
+    out.push({ firstMove: m, snap: s });
+  }
+  out.sort((a,b)=>{ const av=mmQuick(a.snap), bv=mmQuick(b.snap); return by===2 ? bv-av : av-bv; });
+  return topN ? out.slice(0, topN) : out;
+}
+// minimaks α-β na poziomie tur (czysto funkcyjny)
+function mmSearch(snap, depth, alpha, beta, ctx){
+  if(snap.winner) return snap.winner===2 ? MM_INF : -MM_INF;
+  if(depth <= 0) return mmEvaluate(snap);
+  if(ctx.nodes++ > MM_NODE_BUDGET || performance.now() > ctx.deadline){ ctx.cutoff = true; return mmEvaluate(snap); }
+  const by = snap.player;
+  const turns = mmExpandTurns(snap, by, ctx, depth>=3 ? 6 : 12);
+  if(!turns.length) return mmEvaluate(snap);
+  if(by === 2){
+    let v = -Infinity;
+    for(const t of turns){
+      v = Math.max(v, mmSearch(t.snap, depth-1, alpha, beta, ctx));
+      alpha = Math.max(alpha, v);
+      if(alpha >= beta) break;
+    }
+    return v;
+  } else {
+    let v = +Infinity;
+    for(const t of turns){
+      v = Math.min(v, mmSearch(t.snap, depth-1, alpha, beta, ctx));
+      beta = Math.min(beta, v);
+      if(alpha >= beta) break;
+    }
+    return v;
+  }
+}
+// wybór najlepszego PIERWSZEGO ruchu bota — iterative deepening na klonie roota
+function mmPickBest(liveState, by){
+  const root = mmSnap(liveState);                  // NIGDY nie dotykamy żywego state
+  const ctx = { nodes:0, deadline: performance.now() + MM_TIME_BUDGET_MS, cutoff:false };
+  let best = null;
+  for(let d = 1; d <= MM_MAX_DEPTH; d++){
+    if(performance.now() > ctx.deadline) break;
+    const turns = mmExpandTurns(root, by, ctx, 12);
+    if(!turns.length) break;
+    let lvBest = null, lvVal = -Infinity, alpha = -Infinity, beta = +Infinity;
+    for(const t of turns){
+      const v = mmSearch(t.snap, d-1, alpha, beta, ctx);
+      if(v > lvVal){ lvVal = v; lvBest = t.firstMove; }
+      alpha = Math.max(alpha, lvVal);
+      if(performance.now() > ctx.deadline) break;
+    }
+    if(lvBest) best = lvBest;
+    if(ctx.cutoff) break;
+    if(lvVal >= MM_INF/2) break;                   // pewny gol — nie szukaj dalej
+  }
+  return best;
 }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function botTurn(){
