@@ -1,13 +1,16 @@
 {
   "name": "pilkarzyki",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Piłkarzyki na kartce — mobilna gra z reklamami AdMob (Capacitor + Android).",
   "private": true,
   "scripts": {
+    "version:sync": "node scripts/sync-version.js",
+    "presync": "npm run version:sync",
     "sync": "cap sync",
     "open:android": "cap open android",
-    "build:android": "cap sync android && cd android && ./gradlew assembleRelease",
-    "bundle:android": "cap sync android && cd android && ./gradlew bundleRelease"
+    "build:android": "npm run version:sync && cap sync android && cd android && ./gradlew assembleRelease",
+    "bundle:android": "npm run version:sync && cap sync android && cd android && ./gradlew bundleRelease",
+    "version": "npm run version:sync && git add www/version.js android/app/build.gradle"
   },
   "dependencies": {
     "@capacitor-community/admob": "^8.0.0",

@@ -61,6 +61,40 @@ A potem w Android Studio kliknij ponownie ▶ Run. NIE musisz restartować Gradl
 
 ---
 
+## Wersjonowanie
+
+Jedno źródło prawdy: pole `version` w `package.json`. Skrypt `scripts/sync-version.js`
+propaguje wersję do `android/app/build.gradle` (`versionName` + `versionCode`)
+i `www/version.js` (`window.APP_VERSION` — widoczne w stopce gry).
+
+`versionCode` wyliczany deterministycznie z semvera: `major*10000 + minor*100 + patch`.
+Np. `1.2.3` → `10203`. Play Console wymaga monotonicznego wzrostu — póki nie cofasz
+wersji, ten schemat to gwarantuje.
+
+### Bump wersji
+
+```bash
+# patch (0.2.0 → 0.2.1) — drobne poprawki
+npm version patch
+
+# minor (0.2.0 → 0.3.0) — nowa funkcja
+npm version minor
+
+# major (0.2.0 → 1.0.0) — duże zmiany / pierwsza stabilna
+npm version major
+```
+
+`npm version` automatycznie odpala `scripts/sync-version.js` (przez `version` script),
+robi commit i taguje. Potem:
+
+```bash
+npx cap sync   # presync też odpala sync-version dla pewności
+```
+
+W stopce gry pojawi się `v0.2.0` (lub aktualna).
+
+---
+
 ## 5. Build wersji do Play (AAB)
 
 ### 5a. Klucz podpisywania (jednorazowo)

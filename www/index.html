@@ -163,9 +163,10 @@
     </details>
   </div>
 
-  <p class="foot">Prototyp do gry w przeglądarce (działa też dotykowo na telefonie). Cała logika gry i bota jest w czystym JS — łatwa do przeniesienia do realnej apki mobilnej.</p>
+  <p class="foot">⚽ Piłkarzyki na kartce · Seweryn Chorzewski · <span id="appVer">v?</span></p>
 </div>
 
+<script src="version.js"></script>
 <script>
 "use strict";
 // ---------- geometria boiska ----------
@@ -491,6 +492,12 @@ function renderScore(){
   document.getElementById("scoreLbl2").textContent = mode==="bot"?"Bot":"Gracz 2";
 }
 renderScore();
+
+// wyświetl wersję w stopce
+(function(){
+  const el = document.getElementById("appVer");
+  if(el && window.APP_VERSION) el.textContent = "v" + window.APP_VERSION;
+})();
 
 newGame();
 
