@@ -44,6 +44,10 @@ Legenda priorytetów: 🔴 wysoki · 🟡 średni · 🟢 niski (nice-to-have)
 - [ ] 🔴 **Konto Play Console** ($25) + listing (gotowy w [PLAY-STORE-LISTING.md](PLAY-STORE-LISTING.md)).
 - [ ] 🔴 **Screenshoty do Play** z prawdziwego buildu (mamy już z landingu — można reużyć).
 - [ ] 🔴 **Closed testing** — 12 testerów × 14 dni (zegar tyka, uruchomić wcześnie).
+- [ ] 🟡 **AdMob + grupa wiekowa „dla wszystkich"** — skoro target = general audience,
+      jeśli Play sklasyfikuje apkę jako atrakcyjną dla dzieci, trzeba w AdMob/UMP
+      ustawić `tagForChildDirectedTreatment` / niespersonalizowane reklamy i
+      odpowiednio wypełnić Data Safety + „Target audience" w Play Console. (decyzja z PHASE3-DESIGN #4)
 
 ---
 

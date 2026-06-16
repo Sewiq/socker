@@ -41,7 +41,7 @@ Trzy ścieżki użycia muszą współistnieć:
 └────┬─────┘
      │ „Zaloguj się przez Google" (opcja, zachęcamy)
      ▼
-┌──────────┐    konto serwerowe (Google sub jako klucz);
+┌──────────┐    konto serwerowe (Google/Apple);
 │ LOGGED   │    statystyki sync per urządzenie;
 │ (Google) │    LICZY się do rankingu i promo
 └────┬─────┘
@@ -59,8 +59,9 @@ zostaje **podpięta pod nowe konto**. Inaczej ludzie nie zalogują się, bo „s
 Realizacja:
 1. `POST /v1/auth/google` z `{idToken, anonPlayerId, anonGames:[...]}` (max ostatnie N gier
    z metadata: timestamp, wynik, przeciwnik=local).
-2. Serwer weryfikuje `idToken` przez Google tokeninfo, znajduje lub tworzy `users` po
-   `google_sub`.
+2. Serwer weryfikuje `idToken` przez Google tokeninfo, szuka w `identities`
+   (`provider='google', provider_sub=sub`); jeśli brak — tworzy `users` + wpis w `identities`.
+   (Apple w przyszłości: ta sama ścieżka, `provider='apple'`.)
 3. Jeśli to **pierwsze logowanie** tego konta — łączy `anonPlayerId` z `users.id`
    (zapisuje w `anon_links` żeby później wykryć ten sam telefon).
 4. Anonimowe gry vs bot importujemy do `matches` z `account_user_id = NULL, anon_player_id = X`
@@ -88,21 +89,31 @@ Realizacja:
 Jedyna baza, jeden schemat. Migracje przez prosty kompilator `drizzle` lub raw SQL w `server/migrations/NNN_*.sql`.
 
 ```sql
--- USERS: tożsamości serwerowe
+-- USERS: tożsamości serwerowe (provider-agnostyczne — gotowe pod Apple Sign-In)
 CREATE TABLE users (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  google_sub       TEXT UNIQUE,                       -- z idToken Google
-  email            TEXT,                              -- z idToken (opcjonalne)
   nick             TEXT NOT NULL,                     -- ustawialny po zalogowaniu
   country          CHAR(2),                           -- ISO 3166-1 alpha-2
-  premium_until    TIMESTAMPTZ,                       -- NULL = brak; FAR_FUTURE = forever
-  premium_source   TEXT,                              -- 'play_billing' | 'promo_top100' | NULL
+  premium_until    TIMESTAMPTZ,                       -- NULL = free; data = aktywne do; '9999-12-31' = promo-forever
+  premium_source   TEXT,                              -- 'play_sub' | 'promo_top100' | NULL
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   last_seen_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   banned_at        TIMESTAMPTZ,                       -- soft ban (anti-cheat)
   ban_reason       TEXT
 );
 CREATE INDEX users_nick_lc ON users (lower(nick));
+
+-- IDENTITIES: logowania zewnętrzne. Dziś tylko Google; jutro Apple — bez zmiany schematu.
+CREATE TABLE identities (
+  provider         TEXT NOT NULL,                     -- 'google' | 'apple'
+  provider_sub     TEXT NOT NULL,                     -- sub/id z idToken providera
+  user_id          UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  email            TEXT,                              -- z idToken (opcjonalne, do kontaktu)
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (provider, provider_sub)
+);
+CREATE INDEX identities_user ON identities(user_id);
+-- jeden user może mieć wiele tożsamości (Google + Apple → to samo konto)
 
 -- ANON_LINKS: anonimowe UUID-y, które kiedyś zalogowały się pod konto
 CREATE TABLE anon_links (
@@ -161,7 +172,7 @@ CREATE TABLE promo_grants (
 CREATE TABLE purchases (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id          UUID NOT NULL REFERENCES users(id),
-  product_id       TEXT NOT NULL,                     -- np. 'premium_lifetime'
+  product_id       TEXT NOT NULL,                     -- 'premium_monthly'
   play_token       TEXT NOT NULL UNIQUE,              -- purchaseToken z Play Billing
   state            TEXT NOT NULL,                     -- 'pending' | 'verified' | 'refunded' | 'failed'
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -260,11 +271,15 @@ nie potrzebuje IP po latach.
 
 ## 5. Premium — Play Billing
 
-### Model
-**`premium_lifetime`** — jednorazowy zakup (~99 zł), brak subskrypcji. Powód:
-- subskrypcja ma większe MRR ale wyższą frykcję dla casual game
-- promo daje premium-forever, więc lifetime jest spójny z mechaniką
-- (możemy dodać też miesięczną subskrypcję później jako tańszą opcję)
+### Model — DECYZJA: tylko subskrypcja miesięczna
+**`premium_monthly`** — subskrypcja **7.99 zł/mc** (Play Billing subscriptions). Brak
+zakupu jednorazowego/lifetime w sklepie.
+- `premium_until` = koniec bieżącego okresu rozliczeniowego; odnowienie przedłuża,
+  anulowanie → wygasa na koniec okresu.
+- **Promo top-100** to jedyna droga do „premium na zawsze" — grant comped
+  (`premium_until = '9999-12-31'`, `premium_source = 'promo_top100'`), nie zakup.
+- Apple (przyszłość iOS): osobny SKU subskrypcji w App Store, ta sama logika
+  `premium_until` po stronie serwera (weryfikacja przez Apple zamiast Play).
 
 ### Co daje premium
 1. **Brak reklam AdMob** (banner ukryty, no interstitial)
@@ -282,30 +297,42 @@ nie potrzebuje IP po latach.
 
 > Zasada: premium = wygoda + kosmetyka. Nigdy pay-to-win.
 
-### Flow zakupu (Android)
-1. UI „Kup premium" → Capacitor plugin `@capacitor-community/in-app-purchases` lub własny bridge
-2. Klient wywołuje Play Billing → user zatwierdza zakup
+### Flow subskrypcji (Android)
+1. UI „Wykup premium 7.99 zł/mc" → Capacitor plugin Play Billing (subscriptions)
+2. Klient inicjuje subskrypcję `premium_monthly` → user zatwierdza w oknie Google
 3. Klient otrzymuje `purchaseToken` + `productId`
 4. Klient `POST /v1/billing/verify` z tokenem
-5. Serwer woła **Google Play Developer API** (`purchases.products.get`) — weryfikacja
-6. Jeśli OK → `users.premium_until = '9999-12-31'`, `premium_source = 'play_billing'`,
-   zapisuje w `purchases`
-7. `consumeAcknowledge` po stronie klienta (Play wymaga)
-8. Klient odświeża JWT (nowy token zawiera `premium=true`)
+5. Serwer woła **Google Play Developer API** (`purchases.subscriptionsv2.get`) — weryfikacja
+6. Jeśli aktywna → `users.premium_until = <expiryTime>`, `premium_source = 'play_sub'`,
+   zapis w `purchases`
+7. `acknowledge` po stronie klienta (Play wymaga w 3 dni)
+8. Klient odświeża JWT (nowy token zawiera `premium=true`, `premium_until`)
+
+### Odnawianie i wygasanie (subskrypcja)
+- **Real-Time Developer Notifications (RTDN)** przez Google Pub/Sub → serwer dostaje
+  webhooki `SUBSCRIPTION_RENEWED` / `_CANCELED` / `_EXPIRED` / `_REVOKED`.
+  Endpoint `/v1/billing/rtdn` aktualizuje `premium_until`.
+- Fallback: cron dzienny weryfikuje subskrypcje z `purchases` wygasające w 48h.
+- Gdy `premium_until < now()` i źródło `play_sub` → user wraca do free (reklamy wracają).
+- Promo (`premium_source='promo_top100'`, `premium_until='9999...'`) — nigdy nie wygasa.
 
 ### Klucze serwerowe
 - Konto serwisowe Google Cloud z dostępem do Play Developer API
 - `GOOGLE_SERVICE_ACCOUNT_JSON` w `.env` na VPS (nie commitowane, kopia w sejfie haseł)
 
-### Refund handling
-Cron raz dziennie odpytuje Play Developer API o subskrypcje/zakupy z ostatnich 30 dni
-→ jeśli refund → `users.premium_until = NULL`, `purchases.state = 'refunded'`.
+### Refund / chargeback
+RTDN przysyła `SUBSCRIPTION_REVOKED` (refund/chargeback) → `users.premium_until = NULL`,
+`purchases.state = 'refunded'`. Fallback cron dzienny dla pewności.
 
 ---
 
 ## 6. Promo top-100 → premium-forever
 
-### Reguły (publiczne — będą na landingu)
+> **Status: NIEAKTYWNE** (`promo_config.active = false`). Mechanika gotowa, ale
+> nie ruszamy bez daty startu. Hero promo na landingu i komunikaty w grze włączymy
+> dopiero gdy data zostanie ustalona — i dopiero gdy anti-cheat działa na produkcji.
+
+### Reguły (publiczne — pojawią się gdy promo wystartuje)
 
 > **Pierwszych 100 graczy w globalnym rankingu ELO na dzień XX.XX.2026 dostaje
 > ProStriker Premium na zawsze. Promo trwa do 2 miesięcy od oficjalnej premiery.**
@@ -439,20 +466,23 @@ Każdy PR ma konkretny zakres, da się go merge'ować osobno, niczego nie psuje 
 
 ---
 
-## 11. Open questions (do zdecydowania ze mną)
+## 11. Decyzje (zamknięte ✅)
 
-1. **Cena premium-lifetime** — proponuję 99 zł (~25 €). Sklep mobile: 19-149 zł to typowy zakres.
-2. **Subskrypcja miesięczna** — robimy od razu (np. 9.99 zł/mc), czy tylko lifetime?
-3. **Logowanie Apple** (kiedyś iOS) — projektujemy schemat tak żeby było łatwo dodać
-   (`auth_providers` tabela zamiast `google_sub` w `users`)? Mała korekta schematu.
-4. **Wiek**: COPPA/RODO kids — czy ograniczamy do 13+ (typowe), czy ogłaszamy „dla wszystkich"?
-   Wpływa na to czy Google Sign-In wymaga rodzicielskiej zgody.
-5. **Konta firmowe vs osobiste** — premium w wersji „rodzinna" (3 konta) później?
-6. **Promo: data startu** — promocja od dnia publikacji w Play, czy od deklaracji „now active"?
-   Druga opcja daje nam czas na obserwację po starcie.
-7. **Komunikacja promo** — landing page hero („Pierwszych 100 graczy dostaje premium-forever")
-   czy subtelny baner („Promo trwa, sprawdź regulamin")? Pierwsze przyciąga, drugie chroni
-   przed lawiną oszustów na starcie.
+1. **Model premium** — ✅ **tylko subskrypcja miesięczna 7.99 zł/mc**. Brak zakupu
+   lifetime w sklepie. „Premium na zawsze" wyłącznie z promo (comped grant).
+2. **Subskrypcja** — ✅ jw., 7.99 zł/mc od startu monetyzacji.
+3. **Apple Sign-In (przyszłość iOS)** — ✅ TAK, schemat już provider-agnostyczny
+   (tabela `identities`, nie `google_sub` w `users`).
+4. **Wiek** — ✅ **„dla wszystkich"** (general audience, bez limitu 13+).
+   ⚠️ Konsekwencja: jeśli Play sklasyfikuje apkę jako atrakcyjną dla dzieci, AdMob
+   musi serwować reklamy **niespersonalizowane / child-directed** (tag
+   `tagForChildDirectedTreatment` / `tagForUnderAgeOfConsent`). Do ustawienia
+   w konfiguracji AdMob + Data Safety. Sign-In Google bez zmian (user sam decyduje).
+5. **Premium rodzinny** — ✅ **NIGDY**. Jedno konto = jedna subskrypcja.
+6. **Data startu promo** — ✅ **promo nieaktywne** (brak terminu). Mechanika
+   zaprojektowana i gotowa, ale `promo_config.active = false`. Włączymy gdy będzie data.
+7. **Promo na landingu** — ✅ dodamy **krzykliwy hero** („Pierwszych 100 → premium
+   na zawsze") **dopiero gdy znana data startu**. Do tego czasu landing bez wzmianki o promo.
 
 ---
 
