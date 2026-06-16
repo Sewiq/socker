@@ -54,6 +54,16 @@ Aktualizacja: 16 czerwca 2026 · Wersja: **0.2.0**
 - [x] `versionCode` = `major*10000 + minor*100 + patch` (deterministyczny)
 - [x] `npm version patch/minor/major` + automatyczny sync
 
+### Faza 1 — fundamenty (ROADMAP)
+- [x] **i18n** PL/EN/DE — `i18n.js` + JSON-y, selektor w ⚙, zmiana bez reloadu
+- [x] **Kompaktowy UI** — topbar + ustawienia w ⚙ dropdownie, boisko dominuje
+- [x] **`storage.js`** — jeden punkt dostępu, `PlayerProfile` (UUID, schemaVersion),
+  `GameRecord` (historia), statystyki jako pochodna historii, XP/level, migracje
+- [x] **Dev server** — `npm run dev` / `dev:lan` (iteracja w przeglądarce bez APK)
+- [ ] Ekran profilu (nick + flaga) — następny krok
+- [ ] Ekran statystyk — po profilu
+- [ ] XP/level widoczne w UI — po profilu
+
 ### Dokumentacja
 - [x] `README.md` — przegląd projektu
 - [x] `docs/BUILD.md` — build APK/AAB krok po kroku + częste błędy
