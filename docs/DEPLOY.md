@@ -126,7 +126,7 @@ server {
     # ssl_certificate_key /etc/letsencrypt/live/prostriker.online/privkey.pem;
     # (wstawi Certbot)
 
-    # ROOT → redirect na /www/  (gra jest w katalogu www/)
+    # ROOT → landing page (index.html w korzeniu repo); gra w /www/
     root /opt/prostriker-web;
     index index.html;
 
@@ -154,8 +154,9 @@ server {
     }
 
     # Statyki: cache długi dla wersjonowanych assetów, no-cache dla index.html
+    # / → landing (index.html), /www/ → gra. Nieznane ścieżki → landing.
     location / {
-        try_files $uri $uri/ /www/index.html;
+        try_files $uri $uri/ /index.html;
     }
     location ~* \.(png|jpg|svg|woff2)$ {
         expires 30d;
