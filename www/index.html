@@ -13,6 +13,7 @@
 <script src="i18n.js"></script>
 <script src="storage.js"></script>
 <script src="countries.js"></script>
+<script src="engine.js"></script>
 <style>
   :root{
     --paper:#FBF8EC;
@@ -344,66 +345,29 @@
 <script src="version.js"></script>
 <script>
 "use strict";
-// ---------- geometria boiska ----------
-const W=8, H=10, gL=3, gR=5;           // boisko 8x10 oczek, bramka 2 oczka szeroka
-const CENTER=[4,5];
+// ---------- silnik gry: importowany z engine.js (window.engine) ----------
+// Aliasy żeby kod gry pozostał czytelny; logika 1:1 z modułem shared.
+const ENG = window.engine;
+const W=ENG.W, H=ENG.H, gL=ENG.gL, gR=ENG.gR, CENTER=ENG.CENTER;
+const FENCE=ENG.FENCE, NODES=ENG.NODES;
+const ek=ENG.ek, isTopGoal=ENG.isTopGoal, isBotGoal=ENG.isBotGoal, isNode=ENG.isNode, inRegion=ENG.inRegion;
+const legalMoves=ENG.legalMoves, degreeOf=ENG.degreeOf;
+
+// Layout SVG (czysty front, nie idzie na serwer)
 const cell=54, padX=46, padY=30;
 const sx=x=>padX+x*cell, sy=y=>padY+(y+1)*cell;
 const svgW=padX*2+W*cell, svgH=padY*2+(H+2)*cell;
-
-function ek(a,b){const ka=a[0]+","+a[1],kb=b[0]+","+b[1];return ka<kb?ka+"|"+kb:kb+"|"+ka;}
-const isPitch=(x,y)=>x>=0&&x<=W&&y>=0&&y<=H;
-const isTopGoal=m=>m[1]===-1&&m[0]>=gL&&m[0]<=gR;
-const isBotGoal=m=>m[1]===H+1&&m[0]>=gL&&m[0]<=gR;
-const isNode=(x,y)=>isPitch(x,y)||isTopGoal([x,y])||isBotGoal([x,y]);
-function inRegion(px,py){
-  if(px>=0&&px<=W&&py>=0&&py<=H)return true;
-  if(px>=gL&&px<=gR&&py>=-1&&py<=0)return true;
-  if(px>=gL&&px<=gR&&py>=H&&py<=H+1)return true;
-  return false;
-}
-const FENCE=new Set();
-(function(){
-  const pts=[[0,0],[gL,0],[gL,-1],[gR,-1],[gR,0],[W,0],[W,H],[gR,H],[gR,H+1],[gL,H+1],[gL,H],[0,H],[0,0]];
-  for(let i=0;i<pts.length-1;i++){
-    let [x1,y1]=pts[i],[x2,y2]=pts[i+1];
-    const dx=Math.sign(x2-x1),dy=Math.sign(y2-y1);
-    let x=x1,y=y1;
-    while(x!==x2||y!==y2){const nx=x+dx,ny=y+dy;FENCE.add(ek([x,y],[nx,ny]));x=nx;y=ny;}
-  }
-})();
-// wszystkie kropki do narysowania
-const NODES=[];
-for(let y=0;y<=H;y++)for(let x=0;x<=W;x++)NODES.push([x,y]);
-for(let x=gL;x<=gR;x++){NODES.push([x,-1]);NODES.push([x,H+1]);}
-
-function legalMoves(ball,used){
-  const [cx,cy]=ball,res=[];
-  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
-    if(!dx&&!dy)continue;
-    const nx=cx+dx,ny=cy+dy;
-    if(!isNode(nx,ny))continue;
-    if(used.has(ek(ball,[nx,ny])))continue;
-    if(!inRegion((cx+nx)/2,(cy+ny)/2))continue;
-    res.push([nx,ny]);
-  }
-  return res;
-}
-function degreeOf(node,used){
-  let d=0;const[x,y]=node;
-  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
-    if(!dx&&!dy)continue;
-    if(used.has(ek(node,[x+dx,y+dy])))d++;
-  }
-  return d;
-}
 
 // ---------- stan gry ----------
 let mode="bot", diff="medium", busy=false;
 let state, history=[];
 function freshState(){
-  return {ball:CENTER.slice(),used:new Set(FENCE),edges:[],player:1,winner:0,winReason:null,bounce:false,moves:0,
-    startTs:Date.now(),starter:1,recorded:false};
+  // bazowy stan z silnika + pola tylko-frontowe (UI/historia/audytka)
+  const s = ENG.freshState();
+  s.startTs = Date.now();
+  s.starter = 1;
+  s.recorded = false;
+  return s;
 }
 function snap(){return{ball:state.ball.slice(),used:new Set(state.used),
   edges:state.edges.map(e=>({a:e.a.slice(),b:e.b.slice(),p:e.p})),
@@ -438,22 +402,14 @@ function refreshAutoHint(){
 }
 
 function applyMove(m,by){
-  const d0=degreeOf(m,state.used);
-  state.used.add(ek(state.ball,m));
-  state.edges.push({a:state.ball.slice(),b:m.slice(),p:by});
-  state.ball=m.slice();
-  state.moves++;
-  if(isTopGoal(m)){state.winner=1;state.winReason="goal";recordWin(1);buzzSafe("Heavy");return;}
-  if(isBotGoal(m)){state.winner=2;state.winReason="goal";recordWin(2);buzzSafe("Heavy");return;}
-  const bounce=d0>=1;
-  state.bounce=bounce;
-  if(bounce) buzzSafe("Light");
-  if(!bounce)state.player=by===1?2:1;
-  if(legalMoves(state.ball,state.used).length===0){   // brak ruchu = przegrana
-    state.winner=state.player===1?2:1;
-    state.winReason="block";
-    recordWin(state.winner);
+  // Delegacja do silnika — ten sam kod używa serwer multiplayera (engine.js).
+  // Tu obudowane efektami UI: wibracje + zapis wyniku na końcu gry.
+  const wasOver = state.winner;
+  ENG.applyMove(state, m, by);
+  if(state.bounce && !state.winner) buzzSafe("Light");
+  if(state.winner && !wasOver){
     buzzSafe("Heavy");
+    recordWin(state.winner);
   }
 }
 function buzzSafe(s){ if(window.__buzz) window.__buzz(s); }
