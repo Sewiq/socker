@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Piłkarzyki">
 <script src="i18n.js"></script>
+<script src="storage.js"></script>
 <style>
   :root{
     --paper:#FBF8EC;
@@ -256,17 +257,20 @@ function degreeOf(node,used){
 let mode="bot", diff="medium", busy=false;
 let state, history=[];
 function freshState(){
-  return {ball:CENTER.slice(),used:new Set(FENCE),edges:[],player:1,winner:0,winReason:null,bounce:false,moves:0};
+  return {ball:CENTER.slice(),used:new Set(FENCE),edges:[],player:1,winner:0,winReason:null,bounce:false,moves:0,
+    startTs:Date.now(),starter:1,recorded:false};
 }
 function snap(){return{ball:state.ball.slice(),used:new Set(state.used),
   edges:state.edges.map(e=>({a:e.a.slice(),b:e.b.slice(),p:e.p})),
-  player:state.player,winner:state.winner,winReason:state.winReason,bounce:state.bounce,moves:state.moves};}
+  player:state.player,winner:state.winner,winReason:state.winReason,bounce:state.bounce,moves:state.moves,
+  startTs:state.startTs,starter:state.starter,recorded:state.recorded};}
 function pushHist(){history.push(snap());if(history.length>250)history.shift();}
 function undo(){
   if(busy||!history.length)return;
   const s=history.pop();
   state.ball=s.ball;state.used=s.used;state.edges=s.edges;
   state.player=s.player;state.winner=s.winner;state.winReason=s.winReason;state.bounce=s.bounce;state.moves=s.moves;
+  state.startTs=s.startTs;state.starter=s.starter;state.recorded=s.recorded;
   render();
 }
 function newGame(){state=freshState();history=[];busy=false;hideEndModal();render();}
@@ -511,6 +515,18 @@ function recordWin(p){
   const b = score[mode] || (score[mode]={p1:0,p2:0});
   if(p===1) b.p1++; else b.p2++;
   saveScore();renderScore();
+  // trwała historia gier (storage.js) — raz na grę, nawet jeśli renderowane wielokrotnie
+  if(state && !state.recorded && window.storage){
+    state.recorded = true;
+    storage.saveGameRecord({
+      mode,
+      difficulty: mode==="bot" ? diff : null,
+      winner: p,
+      reason: state.winReason || "goal",
+      duration: state.startTs ? Math.round((Date.now()-state.startTs)/1000) : 0,
+      meta: { starter: state.starter, moves: state.moves, boardW: W, boardH: H }
+    });
+  }
   setTimeout(()=>showEndModal(p), 350);
 }
 function showEndModal(winner){
@@ -561,6 +577,8 @@ document.getElementById("langSeg").addEventListener("click", async e=>{
   const b = e.target.closest("button[data-lang]");
   if(!b) return;
   await i18n.setLanguage(b.dataset.lang);
+  // zsynchronizuj wybór języka do profilu gracza (pod chmurę)
+  if(window.storage) storage.updateProfile({ language: b.dataset.lang });
 });
 i18n.onChange(()=>{
   markActiveLang();
@@ -568,8 +586,8 @@ i18n.onChange(()=>{
   if(state) updateStatus();
 });
 
-// start gry — dopiero gdy słownik załadowany
-i18n.ready.then(()=>{
+// start gry — dopiero gdy słownik i dane gracza załadowane
+Promise.all([i18n.ready, window.storage ? storage.ready : Promise.resolve()]).then(()=>{
   i18n.applyTranslations();
   markActiveLang();
   newGame();
