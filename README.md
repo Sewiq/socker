@@ -49,18 +49,21 @@ W Android Studio: zielony "Run" odpala apkę na podłączonym telefonie lub emul
 
 ## AdMob — konfiguracja
 
-1. Załóż konto na [admob.google.com](https://admob.google.com), dodaj aplikację, zanotuj **App ID** (`ca-app-pub-XXXX~YYYY`) i utwórz unit reklamowy typu **Banner** (`ca-app-pub-XXXX/ZZZZ`).
-2. W `android/app/src/main/AndroidManifest.xml` (powstanie po `cap add android`) dodaj wewnątrz `<application>`:
+**App ID Piłkarzyków:** `ca-app-pub-9793821286854398~4316124888`
+
+Pełna instrukcja krok po kroku: [`docs/ADMOB.md`](docs/ADMOB.md). W skrócie:
+
+1. W `android/app/src/main/AndroidManifest.xml` (powstaje po `cap add android`) dodaj wewnątrz `<application>`:
 
    ```xml
    <meta-data
        android:name="com.google.android.gms.ads.APPLICATION_ID"
-       android:value="ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY"/>
+       android:value="ca-app-pub-9793821286854398~4316124888"/>
    ```
 
-3. W `www/index.html` w sekcji `AdMobIntegration` podmień `BANNER_AD_UNIT_ID` na swój prawdziwy ID (na czas developmentu zostają testowe ID Google — patrz `adId` w kodzie).
-4. W `capacitor.config.json` ustaw `"initializeForTesting": false` przed publikacją.
-5. **RODO / EU:** dodaj UMP (User Messaging Platform) — w pluginie AdMob jest gotowa metoda `requestConsentInfo()`.
+2. W panelu AdMob utwórz **banner ad unit** dla apki „Piłkarzyki" → dostaniesz `ca-app-pub-9793821286854398/XXXXXXXXXX` → podmień stałą `AD_UNIT_BANNER` w `www/index.html`.
+3. Przed publikacją: `isTesting: false` w `www/index.html` i `"initializeForTesting": false` w `capacitor.config.json`.
+4. **RODO / EU:** podepnij UMP (User Messaging Platform) — `AdMob.requestConsentInfo()` w pluginie.
 
 > Reklamy testowe ZAWSZE używaj na czas developmentu — klikanie własnych prawdziwych reklam = blokada konta AdMob.
 
