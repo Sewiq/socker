@@ -10,6 +10,7 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Piłkarzyki">
+<script src="i18n.js"></script>
 <style>
   :root{
     --paper:#FBF8EC;
@@ -26,32 +27,52 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:#eef1f5;color:var(--text);
     font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
-  .wrap{max-width:580px;margin:0 auto;padding:14px 14px 40px}
-  h1{font-size:22px;margin:6px 0 2px;color:var(--ink);letter-spacing:.3px}
-  .sub{font-size:13px;color:#5b6b85;margin:0 0 12px}
-  .panel{background:#fff;border:1px solid #e2e7ef;border-radius:14px;
-    padding:12px;margin-bottom:12px;box-shadow:0 1px 2px rgba(20,40,80,.05)}
-  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-  .seg{display:inline-flex;background:#eef1f6;border-radius:10px;padding:3px;gap:3px}
-  .seg button{border:0;background:transparent;padding:7px 12px;border-radius:8px;
-    font-size:13px;font-weight:600;color:#4a5a78;cursor:pointer}
+  .wrap{max-width:580px;margin:0 auto;padding:8px 10px 24px}
+
+  /* TOP BAR — kompaktowy pasek u góry */
+  .topbar{display:flex;align-items:center;gap:6px;padding:4px 2px 8px;position:relative}
+  .brand{font-size:17px;font-weight:800;color:var(--ink);letter-spacing:.2px;
+    margin-right:auto;display:flex;align-items:center;gap:5px;white-space:nowrap}
+  .icon-btn{border:1px solid #d4dae6;background:#fff;color:var(--ink);
+    width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:700;
+    display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1}
+  .icon-btn:active{transform:translateY(1px)}
+  .icon-btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .icon-btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* SETTINGS POP — chowa się dopóki użytkownik nie chce zmienić ustawień */
+  .settings-pop{position:absolute;top:46px;right:0;background:#fff;border:1px solid #d4dae6;
+    border-radius:12px;padding:12px;min-width:240px;box-shadow:0 8px 24px rgba(20,30,60,.18);
+    z-index:30;display:none}
+  .settings-pop.open{display:block}
+  .settings-pop .lbl-small{display:block;font-size:11px;color:#6b7a96;font-weight:700;
+    text-transform:uppercase;letter-spacing:.6px;margin:0 0 5px}
+  .settings-pop .seg-group+.seg-group{margin-top:10px}
+
+  /* STATUS — jednolinijkowy: kropka • tura • wynik */
+  .status{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;
+    padding:8px 10px;border-radius:10px;background:#fff;border:1px solid #e2e7ef;margin-bottom:8px}
+  .chip{width:12px;height:12px;border-radius:50%;flex:0 0 auto;border:2px solid #fff;box-shadow:0 0 0 1px #ccc}
+  #turnText{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .score-inline{display:inline-flex;align-items:center;gap:0;font-weight:800;
+    background:#f3f5f9;padding:3px 8px;border-radius:8px;font-size:14px;white-space:nowrap}
+  .score-inline .s1{color:var(--ink)}
+  .score-inline .s2{color:var(--ink2)}
+  .score-inline .sp{color:#9fb3cf;padding:0 4px}
+  .bounce{font-size:11px;color:var(--ball-ring);font-weight:700;opacity:0;transition:opacity .2s;
+    background:#fff3eb;padding:2px 6px;border-radius:6px;white-space:nowrap}
+  .bounce.show{opacity:1}
+
+  .seg{display:inline-flex;background:#eef1f6;border-radius:10px;padding:3px;gap:3px;width:100%}
+  .seg button{border:0;background:transparent;padding:7px 10px;border-radius:8px;
+    font-size:13px;font-weight:600;color:#4a5a78;cursor:pointer;flex:1}
   .seg button.on{background:var(--ink);color:#fff}
+
   .btn{border:1px solid #d4dae6;background:#fff;color:var(--ink);font-weight:600;
     font-size:13px;padding:8px 13px;border-radius:10px;cursor:pointer}
   .btn:active{transform:translateY(1px)}
   .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .lbl{font-size:12px;color:#6b7a96;font-weight:600;margin-right:2px}
-  .status{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;
-    padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #e2e7ef;margin-bottom:10px}
-  .chip{width:16px;height:16px;border-radius:50%;flex:0 0 auto;border:2px solid #fff;box-shadow:0 0 0 1px #ccc}
-  .bounce{margin-left:auto;font-size:13px;color:var(--ball-ring);font-weight:700;opacity:0;transition:opacity .2s}
-  .bounce.show{opacity:1}
-  .score{display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;font-weight:700;
-    padding:8px 12px;border-radius:12px;background:#fff;border:1px solid #e2e7ef;margin-bottom:10px}
-  .score b{font-size:20px;color:var(--ink);min-width:18px;display:inline-block;text-align:center}
-  .score-side{display:inline-flex;align-items:center;gap:6px}
-  .score-sep{color:#9fb3cf}
-  .score-reset{margin-left:auto;padding:4px 9px;font-size:13px;line-height:1}
+
   .banner{display:none;margin-top:10px;padding:12px;border-radius:12px;text-align:center;
     font-weight:700;font-size:16px}
   .banner.win1{display:block;background:#e9f2ff;color:var(--ink);border:1px solid #bcd3f3}
@@ -62,10 +83,12 @@
   .hit{fill:transparent;cursor:pointer}
   @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
   @media (prefers-reduced-motion:reduce){.target-ring{animation:none;opacity:.8}}
+  .panel{background:#fff;border:1px solid #e2e7ef;border-radius:14px;
+    padding:12px;margin-top:10px;box-shadow:0 1px 2px rgba(20,40,80,.05)}
   details{font-size:13.5px;line-height:1.5}
   details summary{cursor:pointer;font-weight:700;color:var(--ink);outline:none}
   details p{margin:8px 0 0}
-  .foot{font-size:12px;color:#7a89a3;margin-top:14px;line-height:1.5}
+  .foot{font-size:11px;color:#7a89a3;margin-top:14px;line-height:1.4;text-align:center}
   .modal{position:fixed;inset:0;background:rgba(20,30,50,.45);display:flex;align-items:center;
     justify-content:center;padding:18px;z-index:50;animation:fade .18s ease-out}
   .modal[hidden]{display:none}
@@ -79,37 +102,47 @@
   .modal-actions{display:flex;gap:8px;justify-content:center}
   @keyframes fade{from{opacity:0}to{opacity:1}}
   @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
-  .legend{display:flex;gap:14px;font-size:12px;color:#6b7a96;margin-top:8px;flex-wrap:wrap}
-  .legend span{display:inline-flex;align-items:center;gap:6px}
-  .sw{width:18px;height:4px;border-radius:2px;display:inline-block}
+  /* language switcher w dropdownie ustawień */
+  .lang-seg{display:inline-flex;background:#eef1f6;border-radius:10px;padding:3px;gap:3px;width:100%}
+  .lang-seg button{border:0;background:transparent;padding:7px 10px;border-radius:8px;
+    font-size:12px;font-weight:700;color:#4a5a78;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;flex:1}
+  .lang-seg button.on{background:var(--ink);color:#fff}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>⚽ Piłkarzyki na kartce</h1>
-  <p class="sub">Strzel gola w bramce przeciwnika. Odbicie o bandę lub zajętą kropkę = grasz dalej.</p>
-
-  <div class="panel">
-    <div class="row">
-      <span class="lbl">Tryb</span>
-      <div class="seg" id="modeSeg">
-        <button data-mode="bot" class="on">Z botem</button>
-        <button data-mode="2p">2 graczy</button>
+  <div class="topbar">
+    <div class="brand">⚽ <span data-i18n="app.title">Piłkarzyki</span></div>
+    <button class="icon-btn primary" id="newBtn" data-i18n-attr-title="actions.newGame" data-i18n-attr-aria-label="actions.newGame" title="Nowa gra" aria-label="Nowa gra">↻</button>
+    <button class="icon-btn" id="undoBtn" data-i18n-attr-title="actions.undo" data-i18n-attr-aria-label="actions.undo" title="Cofnij" aria-label="Cofnij">↶</button>
+    <button class="icon-btn" id="settingsBtn" data-i18n-attr-aria-label="settings.title" aria-label="Ustawienia" aria-expanded="false">⚙</button>
+    <div class="settings-pop" id="settingsPop" role="menu">
+      <div class="seg-group">
+        <span class="lbl-small" data-i18n="settings.mode">Tryb</span>
+        <div class="seg" id="modeSeg">
+          <button data-mode="bot" class="on" data-i18n="settings.modeBot">Z botem</button>
+          <button data-mode="2p" data-i18n="settings.mode2p">2 graczy</button>
+        </div>
       </div>
-      <span class="lbl" id="diffLbl">Poziom</span>
-      <div class="seg" id="diffSeg">
-        <button data-diff="easy">Łatwy</button>
-        <button data-diff="medium" class="on">Średni</button>
-        <button data-diff="hard">Trudny</button>
+      <div class="seg-group" id="diffGroup">
+        <span class="lbl-small" id="diffLbl" data-i18n="settings.level">Poziom bota</span>
+        <div class="seg" id="diffSeg">
+          <button data-diff="easy" data-i18n="settings.levelEasy">Łatwy</button>
+          <button data-diff="medium" class="on" data-i18n="settings.levelMedium">Średni</button>
+          <button data-diff="hard" data-i18n="settings.levelHard">Trudny</button>
+        </div>
       </div>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <button class="btn primary" id="newBtn">Nowa gra</button>
-      <button class="btn" id="undoBtn">Cofnij</button>
-      <div class="legend">
-        <span><i class="sw" style="background:var(--ink)"></i>Gracz 1 (niebieski / Ty)</span>
-        <span><i class="sw" style="background:var(--ink2)"></i>Gracz 2 (czerwony / Bot)</span>
-        <span><i class="sw" style="background:var(--ball)"></i>ostatni ruch</span>
+      <div class="seg-group">
+        <span class="lbl-small" data-i18n="settings.language">Język</span>
+        <div class="lang-seg" id="langSeg">
+          <button data-lang="pl">PL</button>
+          <button data-lang="en">EN</button>
+          <button data-lang="de">DE</button>
+        </div>
+      </div>
+      <div class="seg-group">
+        <span class="lbl-small" data-i18n="settings.totalScore">Wynik łączny</span>
+        <button class="btn" id="scoreReset" style="width:100%">↺ <span data-i18n="actions.resetScore">Wyzeruj wynik</span></button>
       </div>
     </div>
   </div>
@@ -117,14 +150,10 @@
   <div class="status">
     <span class="chip" id="turnChip"></span>
     <span id="turnText">—</span>
-    <span class="bounce" id="bounceTag">🔁 Odbicie — grasz dalej!</span>
-  </div>
-
-  <div class="score" id="scorePanel">
-    <span class="score-side"><i class="sw" style="background:var(--ink)"></i><span id="scoreLbl1">Ty</span>: <b id="score1">0</b></span>
-    <span class="score-sep">—</span>
-    <span class="score-side"><b id="score2">0</b> :<span id="scoreLbl2">Bot</span><i class="sw" style="background:var(--ink2)"></i></span>
-    <button class="btn score-reset" id="scoreReset" title="Wyzeruj wynik">↺</button>
+    <span class="bounce" id="bounceTag" data-i18n="status.bounceShort">🔁 Odbicie!</span>
+    <span class="score-inline" id="scorePanel">
+      <span class="s1" id="score1">0</span><span class="sp">:</span><span class="s2" id="score2">0</span>
+    </span>
   </div>
 
   <svg id="board" class="board" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -142,28 +171,28 @@
         <span><b id="endScore2">0</b> :<span id="endLbl2">Bot</span></span>
       </div>
       <div class="modal-actions">
-        <button class="btn primary" id="endRematch">Rewanż</button>
-        <button class="btn" id="endClose">Zamknij</button>
+        <button class="btn primary" id="endRematch" data-i18n="actions.rematch">Rewanż</button>
+        <button class="btn" id="endClose" data-i18n="actions.close">Zamknij</button>
       </div>
     </div>
   </div>
 
   <div class="panel" id="privacyPanel" style="margin-top:12px;display:none">
-    <button class="btn" id="privacyBtn" style="width:100%">Ustawienia prywatności (zgoda na reklamy)</button>
+    <button class="btn" id="privacyBtn" style="width:100%" data-i18n="actions.privacy">Ustawienia prywatności (zgoda na reklamy)</button>
   </div>
 
   <div class="panel" style="margin-top:12px">
     <details>
-      <summary>Zasady</summary>
-      <p><b>1. Jedna linia na turę</b> — od piłki do sąsiedniej kropki, prosto lub na skos.</p>
-      <p><b>2. Żadnej linii dwa razy</b> — linie się nie powtarzają, nie wolno jechać po bandzie.</p>
-      <p><b>3. Odbicie = dodatkowy ruch</b> — koniec na zajętej kropce lub o bandę → ruszasz znów.</p>
-      <p><b>4. Koniec gry</b> — pierwszy gol wygrywa. A jeśli ktoś się <b>zablokuje</b> (nie ma legalnego ruchu w swojej turze) — przegrywa.</p>
-      <p style="color:#6b7a96">Gracz <b>niebieski</b> (Ty) strzela do <b>górnej</b> bramki, gracz <b>czerwony</b> (Bot) do <b>dolnej</b>.</p>
+      <summary data-i18n="rules.title">Zasady</summary>
+      <p data-i18n-html="rules.rule1"></p>
+      <p data-i18n-html="rules.rule2"></p>
+      <p data-i18n-html="rules.rule3"></p>
+      <p data-i18n-html="rules.rule4"></p>
+      <p style="color:#6b7a96" data-i18n-html="rules.intro"></p>
     </details>
   </div>
 
-  <p class="foot">⚽ Piłkarzyki na kartce · Seweryn Chorzewski · <span id="appVer">v?</span></p>
+  <p class="foot"><span data-i18n="foot.signature">⚽ Piłkarzyki na kartce · Seweryn Chorzewski</span> · <span id="appVer">v?</span></p>
 </div>
 
 <script src="version.js"></script>
@@ -395,26 +424,29 @@ function updateStatus(){
   const chip=document.getElementById("turnChip"),txt=document.getElementById("turnText");
   const tag=document.getElementById("bounceTag"),banner=document.getElementById("banner");
   banner.className="banner";
-  const colName=p=>p===1?"NIEBIESKI":"CZERWONY";
-  const shortName=p=>p===1?(mode==="bot"?"Ty":"Gracz 1"):(mode==="bot"?"Bot":"Gracz 2");
+  const colUp = p => i18n.t(p===1 ? "color.blueUpper" : "color.redUpper");
+  const colLow = p => i18n.t(p===1 ? "color.blueLower" : "color.redLower");
+  const shortName = p => i18n.t(p===1
+    ? (mode==="bot" ? "player.you" : "player.p1")
+    : (mode==="bot" ? "player.bot" : "player.p2"));
   if(state.winner){
     const w=state.winner;
     chip.style.background=w===1?"var(--ink)":"var(--ink2)";
     banner.classList.add(w===1?"win1":"win2");
-    const reason = state.winReason==="block"
-      ? "przeciwnik zablokowany — brak ruchu!"
-      : "GOL! 🥅";
-    banner.textContent=`🏆 Wygrywa gracz ${colName(w)} (${shortName(w)}) — ${reason}`;
-    txt.textContent="Koniec gry";
+    const reason = i18n.t(state.winReason==="block" ? "status.reasonBlock" : "status.reasonGoal");
+    banner.textContent = i18n.t("status.bannerWin", {color: colUp(w), name: shortName(w), reason});
+    txt.textContent = i18n.t("status.gameOver");
     tag.classList.remove("show");
     return;
   }
   const p=state.player;
   chip.style.background=p===1?"var(--ink)":"var(--ink2)";
-  const who=p===1?(mode==="bot"?"Ty":"Gracz 1"):(mode==="bot"?"Bot myśli…":"Gracz 2");
-  const goal=p===1?"górnej":"dolnej";
-  txt.textContent=`Tura: ${who} (${colName(p).toLowerCase()}) — do ${goal} bramki`;
-  tag.classList.toggle("show",state.bounce);
+  const who = p===1
+    ? i18n.t(mode==="bot" ? "player.you" : "player.p1")
+    : i18n.t(mode==="bot" ? "player.botThinking" : "player.p2");
+  const goal = i18n.t(p===1 ? "goal.upper" : "goal.lower");
+  txt.textContent = i18n.t("status.turn", {who, color: colLow(p), goal});
+  tag.classList.toggle("show", state.bounce);
 }
 
 function onTarget(m){
@@ -430,10 +462,26 @@ document.getElementById("modeSeg").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
   mode=b.dataset.mode;
   [...e.currentTarget.children].forEach(c=>c.classList.toggle("on",c===b));
-  document.getElementById("diffLbl").style.display=mode==="bot"?"":"none";
-  document.getElementById("diffSeg").style.display=mode==="bot"?"":"none";
+  document.getElementById("diffGroup").style.display=mode==="bot"?"":"none";
   renderScore();
   newGame();
+});
+
+// settings popover — toggle + zamykanie klikiem poza
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsPop = document.getElementById("settingsPop");
+settingsBtn.addEventListener("click",e=>{
+  e.stopPropagation();
+  const open = settingsPop.classList.toggle("open");
+  settingsBtn.classList.toggle("on", open);
+  settingsBtn.setAttribute("aria-expanded", open ? "true" : "false");
+});
+document.addEventListener("click",e=>{
+  if(!settingsPop.classList.contains("open"))return;
+  if(settingsPop.contains(e.target)||settingsBtn.contains(e.target))return;
+  settingsPop.classList.remove("open");
+  settingsBtn.classList.remove("on");
+  settingsBtn.setAttribute("aria-expanded","false");
 });
 document.getElementById("diffSeg").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
@@ -467,20 +515,24 @@ function recordWin(p){
 }
 function showEndModal(winner){
   if(!state || !state.winner) return;
-  const colName=p=>p===1?"niebieski":"czerwony";
-  const shortName=p=>p===1?(mode==="bot"?"Ty":"Gracz 1"):(mode==="bot"?"Bot":"Gracz 2");
+  const colLow = p => i18n.t(p===1 ? "color.blueLower" : "color.redLower");
+  const shortName = p => i18n.t(p===1
+    ? (mode==="bot" ? "player.you" : "player.p1")
+    : (mode==="bot" ? "player.bot" : "player.p2"));
   const isYou = mode==="bot" && winner===1;
-  document.getElementById("endTrophy").textContent = isYou?"🏆":(mode==="bot"?"🤖":"🏆");
+  document.getElementById("endTrophy").textContent = isYou ? "🏆" : (mode==="bot" ? "🤖" : "🏆");
   document.getElementById("endTitle").textContent =
-    isYou?"Wygrana!" : (mode==="bot"?"Bot wygrywa":`Wygrywa ${shortName(winner)}`);
+    isYou ? i18n.t("end.titleYouWin")
+          : (mode==="bot" ? i18n.t("end.titleBotWin")
+                          : i18n.t("end.titleWin", {name: shortName(winner)}));
   document.getElementById("endSub").textContent =
-    (state.winReason==="block"?"Przeciwnik zablokowany — brak ruchu.":"Gol! 🥅") +
-    ` (gracz ${colName(winner)})`;
+    i18n.t(state.winReason==="block" ? "end.subBlock" : "end.subGoal")
+    + i18n.t("end.subPlayer", {color: colLow(winner)});
   const b = score[mode]||{p1:0,p2:0};
   document.getElementById("endScore1").textContent = b.p1;
   document.getElementById("endScore2").textContent = b.p2;
-  document.getElementById("endLbl1").textContent = mode==="bot"?"Ty":"Gracz 1";
-  document.getElementById("endLbl2").textContent = mode==="bot"?"Bot":"Gracz 2";
+  document.getElementById("endLbl1").textContent = i18n.t(mode==="bot" ? "player.you" : "player.p1");
+  document.getElementById("endLbl2").textContent = i18n.t(mode==="bot" ? "player.bot" : "player.p2");
   document.getElementById("endModal").hidden = false;
 }
 function hideEndModal(){ document.getElementById("endModal").hidden = true; }
@@ -488,8 +540,6 @@ function renderScore(){
   const b = score[mode] || {p1:0,p2:0};
   document.getElementById("score1").textContent = b.p1;
   document.getElementById("score2").textContent = b.p2;
-  document.getElementById("scoreLbl1").textContent = mode==="bot"?"Ty":"Gracz 1";
-  document.getElementById("scoreLbl2").textContent = mode==="bot"?"Bot":"Gracz 2";
 }
 renderScore();
 
@@ -499,7 +549,31 @@ renderScore();
   if(el && window.APP_VERSION) el.textContent = "v" + window.APP_VERSION;
 })();
 
-newGame();
+// ---------- i18n: language switcher + reactivity ----------
+function markActiveLang(){
+  const cur = i18n.getLanguage();
+  document.querySelectorAll("#langSeg button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.lang === cur);
+  });
+  document.title = i18n.t("app.title");
+}
+document.getElementById("langSeg").addEventListener("click", async e=>{
+  const b = e.target.closest("button[data-lang]");
+  if(!b) return;
+  await i18n.setLanguage(b.dataset.lang);
+});
+i18n.onChange(()=>{
+  markActiveLang();
+  renderScore();
+  if(state) updateStatus();
+});
+
+// start gry — dopiero gdy słownik załadowany
+i18n.ready.then(()=>{
+  i18n.applyTranslations();
+  markActiveLang();
+  newGame();
+});
 
 // rejestracja service workera (tylko w przeglądarce po http/https; w apce Capacitora pomijamy)
 const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
