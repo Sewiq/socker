@@ -60,8 +60,10 @@ Legenda priorytetów: 🔴 wysoki · 🟡 średni · 🟢 niski (nice-to-have)
 
 ## 🤖 Gra / rozgrywka
 
-- [ ] 🟢 **Mocniejszy bot (minimaks α-β)** — poziom „Ekspert" z przeszukiwaniem
-      całych tur (łańcuchy odbić).
+- [x] ✅ **Mocniejszy bot (minimaks α-β)** — poziom „Trudny" używa pełnego
+      minimaksu z przeszukiwaniem TUR (łańcuchy odbić). Budżet 600 ms/ruch,
+      iterative deepening do głębokości 5 tur, ocena pozycyjna (progres do
+      bramki + środek + mobilność). Benchmark: **20:0** vs heurystyka medium.
 - [ ] 🟢 **Animacja rysowania linii** — „ołówek po kartce" zamiast pojawiania się.
 - [ ] 🟢 **Dźwięki** — ołówek przy ruchu, gwizdek przy golu (z wyciszeniem).
 - [ ] 🟢 **Ciemny motyw** — „kartka w nocy".
