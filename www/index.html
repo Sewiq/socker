@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Piłkarzyki na kartce</title>
+<meta name="theme-color" content="#2e4a7d">
+<meta name="description" content="Piłkarzyki na kartce — klasyczna gra papierowa. Graj z botem lub we dwoje.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Piłkarzyki">
+<style>
+  :root{
+    --paper:#FBF8EC;
+    --grid:#cfe0ef;
+    --margin:#d9594e;
+    --ink:#2e4a7d;
+    --ink2:#b5532a;
+    --ball:#e8732a;
+    --ball-ring:#a84718;
+    --good:#2ea05a;
+    --dot:#9fb3cf;
+    --text:#23324f;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:#eef1f5;color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+  .wrap{max-width:580px;margin:0 auto;padding:14px 14px 40px}
+  h1{font-size:22px;margin:6px 0 2px;color:var(--ink);letter-spacing:.3px}
+  .sub{font-size:13px;color:#5b6b85;margin:0 0 12px}
+  .panel{background:#fff;border:1px solid #e2e7ef;border-radius:14px;
+    padding:12px;margin-bottom:12px;box-shadow:0 1px 2px rgba(20,40,80,.05)}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .seg{display:inline-flex;background:#eef1f6;border-radius:10px;padding:3px;gap:3px}
+  .seg button{border:0;background:transparent;padding:7px 12px;border-radius:8px;
+    font-size:13px;font-weight:600;color:#4a5a78;cursor:pointer}
+  .seg button.on{background:var(--ink);color:#fff}
+  .btn{border:1px solid #d4dae6;background:#fff;color:var(--ink);font-weight:600;
+    font-size:13px;padding:8px 13px;border-radius:10px;cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .lbl{font-size:12px;color:#6b7a96;font-weight:600;margin-right:2px}
+  .status{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;
+    padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #e2e7ef;margin-bottom:10px}
+  .chip{width:16px;height:16px;border-radius:50%;flex:0 0 auto;border:2px solid #fff;box-shadow:0 0 0 1px #ccc}
+  .bounce{margin-left:auto;font-size:13px;color:var(--ball-ring);font-weight:700;opacity:0;transition:opacity .2s}
+  .bounce.show{opacity:1}
+  .score{display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;font-weight:700;
+    padding:8px 12px;border-radius:12px;background:#fff;border:1px solid #e2e7ef;margin-bottom:10px}
+  .score b{font-size:20px;color:var(--ink);min-width:18px;display:inline-block;text-align:center}
+  .score-side{display:inline-flex;align-items:center;gap:6px}
+  .score-sep{color:#9fb3cf}
+  .score-reset{margin-left:auto;padding:4px 9px;font-size:13px;line-height:1}
+  .banner{display:none;margin-top:10px;padding:12px;border-radius:12px;text-align:center;
+    font-weight:700;font-size:16px}
+  .banner.win1{display:block;background:#e9f2ff;color:var(--ink);border:1px solid #bcd3f3}
+  .banner.win2{display:block;background:#fdeee6;color:var(--ink2);border:1px solid #f3cbb4}
+  .board{width:100%;background:var(--paper);border:1px solid #e6dfc6;border-radius:12px;display:block}
+  .target-ring{fill:rgba(46,160,90,.18);stroke:var(--good);stroke-width:2.2;pointer-events:none;
+    animation:pulse 1.15s ease-in-out infinite}
+  .hit{fill:transparent;cursor:pointer}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.target-ring{animation:none;opacity:.8}}
+  details{font-size:13.5px;line-height:1.5}
+  details summary{cursor:pointer;font-weight:700;color:var(--ink);outline:none}
+  details p{margin:8px 0 0}
+  .foot{font-size:12px;color:#7a89a3;margin-top:14px;line-height:1.5}
+  .legend{display:flex;gap:14px;font-size:12px;color:#6b7a96;margin-top:8px;flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:18px;height:4px;border-radius:2px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚽ Piłkarzyki na kartce</h1>
+  <p class="sub">Strzel gola w bramce przeciwnika. Odbicie o bandę lub zajętą kropkę = grasz dalej.</p>
+
+  <div class="panel">
+    <div class="row">
+      <span class="lbl">Tryb</span>
+      <div class="seg" id="modeSeg">
+        <button data-mode="bot" class="on">Z botem</button>
+        <button data-mode="2p">2 graczy</button>
+      </div>
+      <span class="lbl" id="diffLbl">Poziom</span>
+      <div class="seg" id="diffSeg">
+        <button data-diff="easy">Łatwy</button>
+        <button data-diff="medium" class="on">Średni</button>
+        <button data-diff="hard">Trudny</button>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="newBtn">Nowa gra</button>
+      <button class="btn" id="undoBtn">Cofnij</button>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--ink)"></i>Gracz 1 (niebieski / Ty)</span>
+        <span><i class="sw" style="background:var(--ink2)"></i>Gracz 2 (czerwony / Bot)</span>
+        <span><i class="sw" style="background:var(--ball)"></i>ostatni ruch</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="status">
+    <span class="chip" id="turnChip"></span>
+    <span id="turnText">—</span>
+    <span class="bounce" id="bounceTag">🔁 Odbicie — grasz dalej!</span>
+  </div>
+
+  <div class="score" id="scorePanel">
+    <span class="score-side"><i class="sw" style="background:var(--ink)"></i><span id="scoreLbl1">Ty</span>: <b id="score1">0</b></span>
+    <span class="score-sep">—</span>
+    <span class="score-side"><b id="score2">0</b> :<span id="scoreLbl2">Bot</span><i class="sw" style="background:var(--ink2)"></i></span>
+    <button class="btn score-reset" id="scoreReset" title="Wyzeruj wynik">↺</button>
+  </div>
+
+  <svg id="board" class="board" xmlns="http://www.w3.org/2000/svg"></svg>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="panel" style="margin-top:12px">
+    <details>
+      <summary>Zasady</summary>
+      <p><b>1. Jedna linia na turę</b> — od piłki do sąsiedniej kropki, prosto lub na skos.</p>
+      <p><b>2. Żadnej linii dwa razy</b> — linie się nie powtarzają, nie wolno jechać po bandzie.</p>
+      <p><b>3. Odbicie = dodatkowy ruch</b> — koniec na zajętej kropce lub o bandę → ruszasz znów.</p>
+      <p><b>4. Koniec gry</b> — pierwszy gol wygrywa. A jeśli ktoś się <b>zablokuje</b> (nie ma legalnego ruchu w swojej turze) — przegrywa.</p>
+      <p style="color:#6b7a96">Gracz <b>niebieski</b> (Ty) strzela do <b>górnej</b> bramki, gracz <b>czerwony</b> (Bot) do <b>dolnej</b>.</p>
+    </details>
+  </div>
+
+  <p class="foot">Prototyp do gry w przeglądarce (działa też dotykowo na telefonie). Cała logika gry i bota jest w czystym JS — łatwa do przeniesienia do realnej apki mobilnej.</p>
+</div>
+
+<script>
+"use strict";
+// ---------- geometria boiska ----------
+const W=8, H=10, gL=3, gR=5;           // boisko 8x10 oczek, bramka 2 oczka szeroka
+const CENTER=[4,5];
+const cell=54, padX=46, padY=30;
+const sx=x=>padX+x*cell, sy=y=>padY+(y+1)*cell;
+const svgW=padX*2+W*cell, svgH=padY*2+(H+2)*cell;
+
+function ek(a,b){const ka=a[0]+","+a[1],kb=b[0]+","+b[1];return ka<kb?ka+"|"+kb:kb+"|"+ka;}
+const isPitch=(x,y)=>x>=0&&x<=W&&y>=0&&y<=H;
+const isTopGoal=m=>m[1]===-1&&m[0]>=gL&&m[0]<=gR;
+const isBotGoal=m=>m[1]===H+1&&m[0]>=gL&&m[0]<=gR;
+const isNode=(x,y)=>isPitch(x,y)||isTopGoal([x,y])||isBotGoal([x,y]);
+function inRegion(px,py){
+  if(px>=0&&px<=W&&py>=0&&py<=H)return true;
+  if(px>=gL&&px<=gR&&py>=-1&&py<=0)return true;
+  if(px>=gL&&px<=gR&&py>=H&&py<=H+1)return true;
+  return false;
+}
+const FENCE=new Set();
+(function(){
+  const pts=[[0,0],[gL,0],[gL,-1],[gR,-1],[gR,0],[W,0],[W,H],[gR,H],[gR,H+1],[gL,H+1],[gL,H],[0,H],[0,0]];
+  for(let i=0;i<pts.length-1;i++){
+    let [x1,y1]=pts[i],[x2,y2]=pts[i+1];
+    const dx=Math.sign(x2-x1),dy=Math.sign(y2-y1);
+    let x=x1,y=y1;
+    while(x!==x2||y!==y2){const nx=x+dx,ny=y+dy;FENCE.add(ek([x,y],[nx,ny]));x=nx;y=ny;}
+  }
+})();
+// wszystkie kropki do narysowania
+const NODES=[];
+for(let y=0;y<=H;y++)for(let x=0;x<=W;x++)NODES.push([x,y]);
+for(let x=gL;x<=gR;x++){NODES.push([x,-1]);NODES.push([x,H+1]);}
+
+function legalMoves(ball,used){
+  const [cx,cy]=ball,res=[];
+  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
+    if(!dx&&!dy)continue;
+    const nx=cx+dx,ny=cy+dy;
+    if(!isNode(nx,ny))continue;
+    if(used.has(ek(ball,[nx,ny])))continue;
+    if(!inRegion((cx+nx)/2,(cy+ny)/2))continue;
+    res.push([nx,ny]);
+  }
+  return res;
+}
+function degreeOf(node,used){
+  let d=0;const[x,y]=node;
+  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
+    if(!dx&&!dy)continue;
+    if(used.has(ek(node,[x+dx,y+dy])))d++;
+  }
+  return d;
+}
+
+// ---------- stan gry ----------
+let mode="bot", diff="medium", busy=false;
+let state, history=[];
+function freshState(){
+  return {ball:CENTER.slice(),used:new Set(FENCE),edges:[],player:1,winner:0,winReason:null,bounce:false,moves:0};
+}
+function snap(){return{ball:state.ball.slice(),used:new Set(state.used),
+  edges:state.edges.map(e=>({a:e.a.slice(),b:e.b.slice(),p:e.p})),
+  player:state.player,winner:state.winner,winReason:state.winReason,bounce:state.bounce,moves:state.moves};}
+function pushHist(){history.push(snap());if(history.length>250)history.shift();}
+function undo(){
+  if(busy||!history.length)return;
+  const s=history.pop();
+  state.ball=s.ball;state.used=s.used;state.edges=s.edges;
+  state.player=s.player;state.winner=s.winner;state.winReason=s.winReason;state.bounce=s.bounce;state.moves=s.moves;
+  render();
+}
+function newGame(){state=freshState();history=[];busy=false;render();}
+
+function applyMove(m,by){
+  const d0=degreeOf(m,state.used);
+  state.used.add(ek(state.ball,m));
+  state.edges.push({a:state.ball.slice(),b:m.slice(),p:by});
+  state.ball=m.slice();
+  state.moves++;
+  if(isTopGoal(m)){state.winner=1;state.winReason="goal";recordWin(1);buzzSafe("Heavy");return;}
+  if(isBotGoal(m)){state.winner=2;state.winReason="goal";recordWin(2);buzzSafe("Heavy");return;}
+  const bounce=d0>=1;
+  state.bounce=bounce;
+  if(bounce) buzzSafe("Light");
+  if(!bounce)state.player=by===1?2:1;
+  if(legalMoves(state.ball,state.used).length===0){   // brak ruchu = przegrana
+    state.winner=state.player===1?2:1;
+    state.winReason="block";
+    recordWin(state.winner);
+    buzzSafe("Heavy");
+  }
+}
+function buzzSafe(s){ if(window.__buzz) window.__buzz(s); }
+
+// ---------- bot ----------
+function canScore(ball,used,wantTop,depth,cnt){
+  if(cnt.n++>4500||depth<=0)return false;
+  for(const m of legalMoves(ball,used)){
+    if(wantTop&&isTopGoal(m))return true;
+    if(!wantTop&&isBotGoal(m))return true;
+    if(degreeOf(m,used)>=1){            // odbicie -> ten sam gracz kontynuuje
+      const e=ek(ball,m);used.add(e);
+      const r=canScore(m,used,wantTop,depth-1,cnt);
+      used.delete(e);
+      if(r)return true;
+    }
+  }
+  return false;
+}
+// czy bot ma w aktualnej turze (po łańcuchu odbić) wygraną?
+function botHasWinningChain(ball,used,depth,cnt){
+  if(cnt.n++>6000||depth<=0)return false;
+  for(const m of legalMoves(ball,used)){
+    if(isBotGoal(m))return true;
+    if(isTopGoal(m))continue;
+    if(degreeOf(m,used)>=1){
+      const e=ek(ball,m);used.add(e);
+      const r=botHasWinningChain(m,used,depth-1,cnt);
+      used.delete(e);
+      if(r)return true;
+    }
+  }
+  return false;
+}
+function botPick(){
+  const legal=legalMoves(state.ball,state.used);
+  const searchDepth = diff==="hard"?18 : diff==="medium"?13 : 6;
+  const searchBudget = diff==="hard"?9000 : 5000;
+  let best=null,bs=-Infinity;
+  for(const m of legal){
+    let s;
+    if(isBotGoal(m)) s=1e12;                 // wygrana teraz
+    else if(isTopGoal(m)) s=-1e12;           // gol samobójczy
+    else{
+      const bounce=degreeOf(m,state.used)>=1;
+      s = m[1]*100 - Math.abs(m[0]-4)*12;     // bliżej dolnej bramki + środek
+      if(bounce) s += 300;                    // odbicia = dodatkowe ruchy
+
+      if(diff!=="easy"){                      // nie oddawaj gola rywalowi
+        const u=new Set(state.used);u.add(ek(state.ball,m));
+        if(!bounce && canScore(m,u,true,searchDepth,{n:0})) s -= 1e9;
+
+        // TRUDNY: sprawdź czy MY mamy łańcuch wygrywający z tego pola
+        if(diff==="hard" && bounce){
+          if(botHasWinningChain(m,u,searchDepth,{n:0})) s += 5e11;
+        }
+      }
+      const noise = diff==="easy"?60 : diff==="hard"?2 : 8;
+      s += Math.random()*noise;
+    }
+    if(s>bs){bs=s;best=m;}
+  }
+  return best;
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function botTurn(){
+  busy=true;render();
+  let guard=0;
+  while(mode==="bot"&&state.player===2&&!state.winner&&guard++<60){
+    await sleep(430);
+    const m=botPick();
+    if(!m)break;
+    pushHist();applyMove(m,2);render();
+  }
+  busy=false;render();
+}
+
+// ---------- render ----------
+const SVG="http://www.w3.org/2000/svg";
+const board=document.getElementById("board");
+board.setAttribute("viewBox",`0 0 ${svgW} ${svgH}`);
+function el(tag,attrs){const e=document.createElementNS(SVG,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+function drawStatic(){
+  board.innerHTML="";
+  board.appendChild(el("rect",{x:0,y:0,width:svgW,height:svgH,fill:"var(--paper)"}));
+  // siatka kratki
+  const g=el("g",{stroke:"var(--grid)","stroke-width":1});
+  for(let x=0;x*cell<svgW;x++)g.appendChild(el("line",{x1:x*cell+padX%cell,y1:0,x2:x*cell+padX%cell,y2:svgH}));
+  for(let y=0;y*cell<svgH;y++)g.appendChild(el("line",{x1:0,y1:y*cell+padY%cell,x2:svgW,y2:y*cell+padY%cell}));
+  board.appendChild(g);
+  // czerwony margines
+  board.appendChild(el("line",{x1:20,y1:0,x2:20,y2:svgH,stroke:"var(--margin)","stroke-width":1.4,opacity:.7}));
+  // banda
+  const pts=[[0,0],[gL,0],[gL,-1],[gR,-1],[gR,0],[W,0],[W,H],[gR,H],[gR,H+1],[gL,H+1],[gL,H],[0,H],[0,0]];
+  const d=pts.map((p,i)=>(i?"L":"M")+sx(p[0])+" "+sy(p[1])).join(" ");
+  board.appendChild(el("path",{d,fill:"none",stroke:"var(--ink)","stroke-width":4,
+    "stroke-linejoin":"round","stroke-linecap":"round"}));
+  // kropki
+  const dots=el("g",{fill:"var(--dot)"});
+  for(const[x,y]of NODES)dots.appendChild(el("circle",{cx:sx(x),cy:sy(y),r:3.4}));
+  board.appendChild(dots);
+  // warstwy dynamiczne
+  board.appendChild(el("g",{id:"gEdges","stroke-linecap":"round"}));
+  board.appendChild(el("g",{id:"gBall"}));
+  board.appendChild(el("g",{id:"gTargets"}));
+}
+function render(){
+  if(!board.querySelector("#gEdges"))drawStatic();
+  const gE=board.querySelector("#gEdges"),gB=board.querySelector("#gBall"),gT=board.querySelector("#gTargets");
+  gE.innerHTML="";gB.innerHTML="";gT.innerHTML="";
+  state.edges.forEach((e,i)=>{
+    const last=i===state.edges.length-1;
+    gE.appendChild(el("line",{x1:sx(e.a[0]),y1:sy(e.a[1]),x2:sx(e.b[0]),y2:sy(e.b[1]),
+      stroke:last?"var(--ball)":(e.p===1?"var(--ink)":"var(--ink2)"),
+      "stroke-width":last?5:3.5}));
+  });
+  // piłka
+  gB.appendChild(el("circle",{cx:sx(state.ball[0]),cy:sy(state.ball[1]),r:10.5,
+    fill:"var(--ball)",stroke:"var(--ball-ring)","stroke-width":3}));
+  // ruchy gracza
+  const humanTurn = !state.winner && !busy && (mode==="2p" || state.player===1);
+  if(humanTurn){
+    for(const m of legalMoves(state.ball,state.used)){
+      gT.appendChild(el("circle",{class:"target-ring",cx:sx(m[0]),cy:sy(m[1]),r:13}));
+      const hit=el("circle",{class:"hit",cx:sx(m[0]),cy:sy(m[1]),r:20});
+      hit.addEventListener("click",()=>onTarget(m));
+      gT.appendChild(hit);
+    }
+  }
+  updateStatus();
+}
+function updateStatus(){
+  const chip=document.getElementById("turnChip"),txt=document.getElementById("turnText");
+  const tag=document.getElementById("bounceTag"),banner=document.getElementById("banner");
+  banner.className="banner";
+  const colName=p=>p===1?"NIEBIESKI":"CZERWONY";
+  const shortName=p=>p===1?(mode==="bot"?"Ty":"Gracz 1"):(mode==="bot"?"Bot":"Gracz 2");
+  if(state.winner){
+    const w=state.winner;
+    chip.style.background=w===1?"var(--ink)":"var(--ink2)";
+    banner.classList.add(w===1?"win1":"win2");
+    const reason = state.winReason==="block"
+      ? "przeciwnik zablokowany — brak ruchu!"
+      : "GOL! 🥅";
+    banner.textContent=`🏆 Wygrywa gracz ${colName(w)} (${shortName(w)}) — ${reason}`;
+    txt.textContent="Koniec gry";
+    tag.classList.remove("show");
+    return;
+  }
+  const p=state.player;
+  chip.style.background=p===1?"var(--ink)":"var(--ink2)";
+  const who=p===1?(mode==="bot"?"Ty":"Gracz 1"):(mode==="bot"?"Bot myśli…":"Gracz 2");
+  const goal=p===1?"górnej":"dolnej";
+  txt.textContent=`Tura: ${who} (${colName(p).toLowerCase()}) — do ${goal} bramki`;
+  tag.classList.toggle("show",state.bounce);
+}
+
+function onTarget(m){
+  if(busy||state.winner)return;
+  pushHist();
+  applyMove(m,state.player);
+  render();
+  if(mode==="bot"&&state.player===2&&!state.winner)botTurn();
+}
+
+// ---------- UI ----------
+document.getElementById("modeSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  mode=b.dataset.mode;
+  [...e.currentTarget.children].forEach(c=>c.classList.toggle("on",c===b));
+  document.getElementById("diffLbl").style.display=mode==="bot"?"":"none";
+  document.getElementById("diffSeg").style.display=mode==="bot"?"":"none";
+  renderScore();
+  newGame();
+});
+document.getElementById("diffSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  diff=b.dataset.diff;
+  [...e.currentTarget.children].forEach(c=>c.classList.toggle("on",c===b));
+  newGame();
+});
+document.getElementById("newBtn").addEventListener("click",newGame);
+document.getElementById("undoBtn").addEventListener("click",undo);
+document.getElementById("scoreReset").addEventListener("click",()=>{
+  score={bot:{p1:0,p2:0},"2p":{p1:0,p2:0}};
+  saveScore();renderScore();
+});
+
+// ---------- wynik (localStorage) ----------
+let score = loadScore();
+function loadScore(){
+  try{ return JSON.parse(localStorage.getItem("pilkarzyki.score")) || {bot:{p1:0,p2:0},"2p":{p1:0,p2:0}}; }
+  catch(e){ return {bot:{p1:0,p2:0},"2p":{p1:0,p2:0}}; }
+}
+function saveScore(){
+  try{ localStorage.setItem("pilkarzyki.score", JSON.stringify(score)); }catch(e){}
+}
+function recordWin(p){
+  const b = score[mode] || (score[mode]={p1:0,p2:0});
+  if(p===1) b.p1++; else b.p2++;
+  saveScore();renderScore();
+}
+function renderScore(){
+  const b = score[mode] || {p1:0,p2:0};
+  document.getElementById("score1").textContent = b.p1;
+  document.getElementById("score2").textContent = b.p2;
+  document.getElementById("scoreLbl1").textContent = mode==="bot"?"Ty":"Gracz 1";
+  document.getElementById("scoreLbl2").textContent = mode==="bot"?"Bot":"Gracz 2";
+}
+renderScore();
+
+newGame();
+
+// rejestracja service workera (tylko w przeglądarce po http/https; w apce Capacitora pomijamy)
+const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+if(!isNative && "serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
+// ---------- integracja natywna (Android via Capacitor) ----------
+// AdMob banner u dołu + lekkie wibracje. Testowe ID Google — podmień przed publikacją.
+const AD_UNIT_BANNER = "ca-app-pub-3940256099942544/6300978111"; // TEST banner
+async function initNative(){
+  if(!isNative || !window.Capacitor.Plugins) return;
+  const { AdMob } = window.Capacitor.Plugins;
+  if(!AdMob) return;
+  try{
+    await AdMob.initialize({ initializeForTesting: true });
+    await AdMob.showBanner({
+      adId: AD_UNIT_BANNER,
+      adSize: "ADAPTIVE_BANNER",
+      position: "BOTTOM_CENTER",
+      margin: 0,
+      isTesting: true
+    });
+  }catch(e){ console.warn("AdMob init failed", e); }
+}
+async function buzz(style){
+  if(!isNative) return;
+  const { Haptics } = window.Capacitor.Plugins || {};
+  if(!Haptics) return;
+  try{ await Haptics.impact({ style: style || "Light" }); }catch(e){}
+}
+window.__buzz = buzz;
+window.addEventListener("load", initNative);
+</script>
+</body>
+</html>
