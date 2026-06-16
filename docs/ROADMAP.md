@@ -72,13 +72,20 @@ Szczegóły: sekcje „Model danych", „Awatary", „Wielojęzyczność" poniż
 
 ---
 
-### FAZA 3 — Turnieje mistrzów
-**Cel:** zarządzana seria meczów 1v1 na działającym multiplayerze.
+### FAZA 3 — Konta & Ranking (rozszerzona)
+**Cel:** trwała tożsamość, ranking globalny, monetyzacja premium + promo launchowe.
 
-- Drabinki turniejowe
-- Rankingi (np. ELO), **rankingi krajowe** (flaga z profilu = gotowa podstawa)
-- Sezony
-- Ma sens dopiero gdy Faza 2 jest stabilna
+Pełny projekt techniczny: **[docs/PHASE3-DESIGN.md](PHASE3-DESIGN.md)** (~12 PR-ów).
+
+Składniki (jeden zintegrowany blok — nie da się robić osobno):
+- **Google Sign-In** + migracja anon → konto (bez utraty postępu)
+- **PostgreSQL** + schemat `users`/`matches`/`ratings`/`promo_grants`/`purchases`
+- **Ranking ELO** (K=24, tylko zalogowani vs zalogowani) + ranking krajowy
+- **Anti-cheat 3-warstwowy** (strukturalny, heurystyczny, manualny audyt)
+- **Premium** (Play Billing): brak reklam + kosmetyka, NIE pay-to-win
+- **Promo top-100 → premium-forever** (po 2 mies. od startu, z manualnym audytem)
+- **Drabinki turniejowe + sezony** (gdy ranking działa stabilnie)
+- **Środowisko staging** (`staging.prostriker.online`) z osobną bazą
 
 ---
 
