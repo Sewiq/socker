@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -172,8 +172,8 @@
       <a href="#how" class="txt" data-t="nav.rules">Zasady</a>
       <a href="www/" class="btn btn-primary" style="padding:10px 18px;font-size:15px" data-t="nav.play">▶ Graj</a>
       <div class="lang" id="lang">
-        <button data-l="pl" class="on">PL</button>
-        <button data-l="en">EN</button>
+        <button data-l="pl">PL</button>
+        <button data-l="en" class="on">EN</button>
         <button data-l="de">DE</button>
       </div>
     </div>
@@ -349,7 +349,7 @@ const I18N = {
   }
 };
 function setLang(l){
-  const d=I18N[l]||I18N.pl;
+  const d=I18N[l]||I18N.en;
   document.documentElement.lang=l;
   document.querySelectorAll("[data-t]").forEach(el=>{ const k=el.getAttribute("data-t"); if(d[k]!=null) el.textContent=d[k]; });
   document.querySelectorAll("[data-t-html]").forEach(el=>{ const k=el.getAttribute("data-t-html"); if(d[k]!=null) el.innerHTML=d[k]; });
@@ -358,9 +358,10 @@ function setLang(l){
 }
 document.getElementById("lang").addEventListener("click",e=>{const b=e.target.closest("button[data-l]"); if(b) setLang(b.dataset.l);});
 (function init(){
-  let l="pl";
-  try{ l=localStorage.getItem("prostriker.landingLang") || (navigator.language||"pl").slice(0,2); }catch(e){}
-  if(!I18N[l]) l="pl";
+  // domyślnie angielski; przeglądarka PL/DE dostaje swój język
+  let l="en";
+  try{ l=localStorage.getItem("prostriker.landingLang") || (navigator.language||"en").slice(0,2); }catch(e){}
+  if(!I18N[l]) l="en";
   setLang(l);
 })();
 // reveal on scroll

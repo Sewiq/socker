@@ -22,7 +22,9 @@
 
 (function () {
   const LANGS = ["pl", "en", "de"];
-  const DEFAULT_LANG = "pl";
+  // Domyślny język = angielski (produkt globalny). Detekcja nadal działa:
+  // przeglądarka PL/DE dostaje swój język, wszystko inne → angielski.
+  const DEFAULT_LANG = "en";
   const STORAGE_KEY = "pilkarzyki.lang";
 
   let dict = {};

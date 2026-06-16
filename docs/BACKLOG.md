@@ -72,11 +72,41 @@ Legenda priorytetów: 🔴 wysoki · 🟡 średni · 🟢 niski (nice-to-have)
 
 ---
 
-## 🏆 Faza 3 — turnieje (przyszłość)
+## 🏆 Faza 3 — Konta & Ranking (jeden blok — patrz [STRATEGY.md](STRATEGY.md))
 
-- [ ] 🟢 **Ranking ELO** + rankingi krajowe (flaga z profilu = gotowa podstawa).
-- [ ] 🟢 **Drabinki turniejowe**, sezony.
-- [ ] 🟢 **Persystencja (Postgres)** — pierwszy moment gdy in-memory serwera nie wystarczy.
+- [ ] 🔴 **Google Sign-In** — trwała tożsamość (warunek promo top-100 i premium).
+- [ ] 🔴 **PostgreSQL na VPS** (docker-compose) — users, matches, ratings, premium.
+- [ ] 🔴 **Ranking ELO** z gier online + rankingi krajowe (flaga z profilu).
+- [ ] 🔴 **Anti-cheat** — wykrywanie smurfów/self-play (to samo IP po obu stronach,
+      min. gier z różnymi graczami) — KONIECZNE przed promo.
+- [ ] 🔴 **Konta premium / free** — `premium_until|forever` po stronie serwera,
+      Google Play Billing + weryfikacja zakupu serwerowa. Premium = brak reklam +
+      kosmetyka (NIE pay-to-win).
+- [ ] 🔴 **Promo top-100 → premium forever** — okno 2 mies. od startu, snapshot
+      top-100 ELO, wymóg min. 20 gier z 10+ graczami. **Ogłosić dopiero gdy
+      auth + anti-cheat gotowe.**
+- [ ] 🟡 **Środowisko staging** (staging.prostriker.online + osobna baza) — wprowadzić
+      RAZEM z DB, bo wtedy są realne dane do ochrony.
+- [ ] 🟢 **Drabinki turniejowe**, sezony — po rankingu.
+
+---
+
+## 🌍 Języki (i18n)
+
+- [x] ✅ **Domyślny angielski** — gra i strona (detekcja PL/DE nadal działa).
+- [ ] 🟡 **ES / IT / PT / FR** — dodać pliki JSON + wpisy (≈90 kluczy każdy).
+      Tłumaczenia warto przejrzeć (jakość brandu). Kroki w [I18N.md](I18N.md).
+- [ ] 🟡 **Selektor języka → dropdown z flagami** — 3 przyciski w rzędzie nie
+      pomieszczą 7 języków. Mała przebudowa UI ⚙.
+
+---
+
+## 📰 Newsy piłkarskie (opcjonalne, po Fazie 3)
+
+- [ ] 🟡 **Widget „mecze dnia"** — serwerowy proxy `/news` do darmowego API
+      (football-data.org / TheSportsDB) z cache 5-15 min. Klucz API NIGDY w kliencie.
+      Najpierw zwalidować czy gracze tego chcą (może rozpraszać od gry).
+- [ ] 🟢 **Alternatywa zero-kosztowa:** „ciekawostka piłkarska dnia" ze statycznej bazy.
 
 ---
 
