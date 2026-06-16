@@ -88,6 +88,27 @@ Ten plik `.aab` wgrywasz do Google Play Console.
 
 ---
 
+## Ikony i splash
+
+Master źródłowy: `www/icons/icon.svg`, `www/icons/icon-maskable.svg`, `www/icons/splash.svg`.
+Wygenerowane PNG-i (cairosvg → `python3 scripts/build-icons.py` lub jednorazowo z palca):
+
+- `icon-192.png`, `icon-512.png` — PWA + Android adaptive
+- `icon-maskable-512.png` — Android maskable (cała grafika w safe zone 80%)
+- `icon-playstore-512.png` — wymagana ikona hi-res przy publikacji w Play
+- `splash-2732.png` — splash screen Capacitora (kwadrat, wycinany do różnych ekranów)
+
+Przy zmianie wyglądu — edytuj SVG, przerasteryzuj, podmień PNG-i.
+
+## Polityka prywatności i app-ads.txt
+
+- `www/legal/privacy.html` — szablon polityki (wymagany przez Play przy reklamach).
+- `www/app-ads.txt` — placeholder; podmień `pub-XXXXXXXXXXXXXXXX` na własny ID z AdMob → Account.
+
+Po wrzuceniu repo na GitHub Pages (Settings → Pages → Source: `main` / root) oba pliki
+dostępne pod `https://sewiq.github.io/socker/legal/privacy.html` i `…/app-ads.txt`.
+Te URL-e wklejasz do Play Console (Privacy Policy) i AdMob (Developer site).
+
 ## Wymagania Google Play (krótka lista)
 
 - [ ] Konto Play Console ($25 jednorazowo)

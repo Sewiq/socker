@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732">
+  <rect width="2732" height="2732" fill="#FBF8EC"/>
+  <g transform="translate(1110 1110) scale(1)">
+    <!-- to samo logo, w środku -->
+    <path d="M 96 96 L 192 96 L 192 64 L 320 64 L 320 96 L 416 96
+             L 416 416 L 320 416 L 320 448 L 192 448 L 192 416 L 96 416 Z"
+          fill="none" stroke="#2e4a7d" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="256" cy="256" r="42" fill="#e8732a" stroke="#a84718" stroke-width="6"/>
+    <line x1="256" y1="256" x2="208" y2="208" stroke="#a84718" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <text x="1366" y="1830" text-anchor="middle"
+        font-family="Segoe UI, Arial, sans-serif" font-size="84" font-weight="700" fill="#2e4a7d">
+    Piłkarzyki
+  </text>
+</svg>

@@ -1,0 +1,4 @@
+# app-ads.txt — autoryzacja sprzedawców reklam dla aplikacji „Piłkarzyki"
+# Po założeniu konta AdMob podmień PUB-ID poniżej na własny (z panelu AdMob → Settings → Account).
+# Plik musi być hostowany pod URL-em podanym jako "Developer site" w Google Play Console.
+google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
