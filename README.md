@@ -5,7 +5,7 @@ Domena: [prostriker.online](https://prostriker.online) · Tryby: bot · 2 graczy
 Darmowa z reklamami Google AdMob (banner u dołu).
 
 📊 **[Status projektu — co zrobione, co w planach →](docs/STATUS.md)**
-🗺️ **[Roadmap →](docs/ROADMAP.md)** · 🌐 **[i18n →](docs/I18N.md)** · 💾 **[Dane →](docs/STORAGE.md)** · 🎮 **[Multiplayer →](docs/MULTIPLAYER.md)** · 🚀 **[Deploy na VPS →](docs/DEPLOY.md)** · 🖥️ **[Serwer (socker-server)](https://github.com/Sewiq/socker-server)**
+🗺️ **[Roadmap →](docs/ROADMAP.md)** · 📋 **[Backlog (zadania) →](docs/BACKLOG.md)** · 🎮 **[Multiplayer →](docs/MULTIPLAYER.md)** · 🚀 **[Deploy na VPS →](docs/DEPLOY.md)** · 🖥️ **[Serwer (socker-server)](https://github.com/Sewiq/socker-server)**
 ⚡ **[Iteracja w przeglądarce — `npm run dev` →](docs/DEV.md)** · 📋 **[Pull → AAB →](docs/NEXT-STEPS.md)**
 
 Cały silnik gry żyje w `www/` jako zwykła PWA (HTML/CSS/JS, bez bibliotek).
