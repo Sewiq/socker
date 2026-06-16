@@ -66,6 +66,19 @@
   details summary{cursor:pointer;font-weight:700;color:var(--ink);outline:none}
   details p{margin:8px 0 0}
   .foot{font-size:12px;color:#7a89a3;margin-top:14px;line-height:1.5}
+  .modal{position:fixed;inset:0;background:rgba(20,30,50,.45);display:flex;align-items:center;
+    justify-content:center;padding:18px;z-index:50;animation:fade .18s ease-out}
+  .modal[hidden]{display:none}
+  .modal-card{background:#fff;border-radius:16px;max-width:380px;width:100%;padding:22px 22px 18px;
+    box-shadow:0 14px 40px rgba(20,30,60,.22);text-align:center;animation:pop .22s ease-out}
+  .modal-trophy{font-size:46px;line-height:1}
+  .modal-title{font-size:22px;font-weight:800;color:var(--ink);margin:6px 0 2px}
+  .modal-sub{font-size:14px;color:#5b6b85;margin-bottom:14px}
+  .modal-score{font-size:18px;font-weight:700;margin-bottom:16px}
+  .modal-score b{font-size:24px;color:var(--ink)}
+  .modal-actions{display:flex;gap:8px;justify-content:center}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
   .legend{display:flex;gap:14px;font-size:12px;color:#6b7a96;margin-top:8px;flex-wrap:wrap}
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .sw{width:18px;height:4px;border-radius:2px;display:inline-block}
@@ -117,6 +130,23 @@
   <svg id="board" class="board" xmlns="http://www.w3.org/2000/svg"></svg>
 
   <div class="banner" id="banner"></div>
+
+  <div class="modal" id="endModal" hidden>
+    <div class="modal-card">
+      <div class="modal-trophy" id="endTrophy">🏆</div>
+      <div class="modal-title" id="endTitle">—</div>
+      <div class="modal-sub" id="endSub">—</div>
+      <div class="modal-score">
+        <span><span id="endLbl1">Ty</span>: <b id="endScore1">0</b></span>
+        <span class="score-sep">—</span>
+        <span><b id="endScore2">0</b> :<span id="endLbl2">Bot</span></span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn primary" id="endRematch">Rewanż</button>
+        <button class="btn" id="endClose">Zamknij</button>
+      </div>
+    </div>
+  </div>
 
   <div class="panel" style="margin-top:12px">
     <details>
@@ -205,7 +235,7 @@ function undo(){
   state.player=s.player;state.winner=s.winner;state.winReason=s.winReason;state.bounce=s.bounce;state.moves=s.moves;
   render();
 }
-function newGame(){state=freshState();history=[];busy=false;render();}
+function newGame(){state=freshState();history=[];busy=false;hideEndModal();render();}
 
 function applyMove(m,by){
   const d0=degreeOf(m,state.used);
@@ -412,6 +442,8 @@ document.getElementById("scoreReset").addEventListener("click",()=>{
   score={bot:{p1:0,p2:0},"2p":{p1:0,p2:0}};
   saveScore();renderScore();
 });
+document.getElementById("endRematch").addEventListener("click",newGame);
+document.getElementById("endClose").addEventListener("click",hideEndModal);
 
 // ---------- wynik (localStorage) ----------
 let score = loadScore();
@@ -426,7 +458,27 @@ function recordWin(p){
   const b = score[mode] || (score[mode]={p1:0,p2:0});
   if(p===1) b.p1++; else b.p2++;
   saveScore();renderScore();
+  setTimeout(()=>showEndModal(p), 350);
 }
+function showEndModal(winner){
+  if(!state || !state.winner) return;
+  const colName=p=>p===1?"niebieski":"czerwony";
+  const shortName=p=>p===1?(mode==="bot"?"Ty":"Gracz 1"):(mode==="bot"?"Bot":"Gracz 2");
+  const isYou = mode==="bot" && winner===1;
+  document.getElementById("endTrophy").textContent = isYou?"🏆":(mode==="bot"?"🤖":"🏆");
+  document.getElementById("endTitle").textContent =
+    isYou?"Wygrana!" : (mode==="bot"?"Bot wygrywa":`Wygrywa ${shortName(winner)}`);
+  document.getElementById("endSub").textContent =
+    (state.winReason==="block"?"Przeciwnik zablokowany — brak ruchu.":"Gol! 🥅") +
+    ` (gracz ${colName(winner)})`;
+  const b = score[mode]||{p1:0,p2:0};
+  document.getElementById("endScore1").textContent = b.p1;
+  document.getElementById("endScore2").textContent = b.p2;
+  document.getElementById("endLbl1").textContent = mode==="bot"?"Ty":"Gracz 1";
+  document.getElementById("endLbl2").textContent = mode==="bot"?"Bot":"Gracz 2";
+  document.getElementById("endModal").hidden = false;
+}
+function hideEndModal(){ document.getElementById("endModal").hidden = true; }
 function renderScore(){
   const b = score[mode] || {p1:0,p2:0};
   document.getElementById("score1").textContent = b.p1;
@@ -445,20 +497,24 @@ if(!isNative && "serviceWorker" in navigator && location.protocol.startsWith("ht
 }
 
 // ---------- integracja natywna (Android via Capacitor) ----------
-// AdMob banner u dołu + lekkie wibracje. Testowe ID Google — podmień przed publikacją.
-const AD_UNIT_BANNER = "ca-app-pub-3940256099942544/6300978111"; // TEST banner
+// AdMob banner u dołu + lekkie wibracje.
+// Produkcyjny ID baneru; tryb testowy (isTesting/initializeForTesting) zostaje TRUE
+// aż do buildu produkcyjnego — Google wymaga tego do testów, klikanie własnych
+// prawdziwych reklam = blokada konta.
+const AD_UNIT_BANNER = "ca-app-pub-9793821286854398/6982945977"; // Socker_baner
+const AD_TESTING = true; // przed releasem → false
 async function initNative(){
   if(!isNative || !window.Capacitor.Plugins) return;
   const { AdMob } = window.Capacitor.Plugins;
   if(!AdMob) return;
   try{
-    await AdMob.initialize({ initializeForTesting: true });
+    await AdMob.initialize({ initializeForTesting: AD_TESTING });
     await AdMob.showBanner({
       adId: AD_UNIT_BANNER,
       adSize: "ADAPTIVE_BANNER",
       position: "BOTTOM_CENTER",
       margin: 0,
-      isTesting: true
+      isTesting: AD_TESTING
     });
   }catch(e){ console.warn("AdMob init failed", e); }
 }

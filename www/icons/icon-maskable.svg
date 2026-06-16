@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- pełne tło papieru (musi sięgać krawędzi — Android może je przyciąć w dowolny kształt) -->
+  <rect width="512" height="512" fill="#FBF8EC"/>
+  <g stroke="#cfe0ef" stroke-width="2" opacity="0.7">
+    <line x1="64"  y1="0" x2="64"  y2="512"/>
+    <line x1="128" y1="0" x2="128" y2="512"/>
+    <line x1="192" y1="0" x2="192" y2="512"/>
+    <line x1="256" y1="0" x2="256" y2="512"/>
+    <line x1="320" y1="0" x2="320" y2="512"/>
+    <line x1="384" y1="0" x2="384" y2="512"/>
+    <line x1="448" y1="0" x2="448" y2="512"/>
+    <line x1="0" y1="64"  x2="512" y2="64"/>
+    <line x1="0" y1="128" x2="512" y2="128"/>
+    <line x1="0" y1="192" x2="512" y2="192"/>
+    <line x1="0" y1="256" x2="512" y2="256"/>
+    <line x1="0" y1="320" x2="512" y2="320"/>
+    <line x1="0" y1="384" x2="512" y2="384"/>
+    <line x1="0" y1="448" x2="512" y2="448"/>
+  </g>
+
+  <!-- boisko skompresowane do safe zone (centralne 80% = wewnątrz 51..461) -->
+  <path d="M 144 144 L 220 144 L 220 120 L 292 120 L 292 144 L 368 144
+           L 368 368 L 292 368 L 292 392 L 220 392 L 220 368 L 144 368 Z"
+        fill="none" stroke="#2e4a7d" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <circle cx="256" cy="256" r="46" fill="#e8732a" stroke="#a84718" stroke-width="7"/>
+  <line x1="256" y1="256" x2="216" y2="216" stroke="#a84718" stroke-width="9" stroke-linecap="round"/>
+</svg>

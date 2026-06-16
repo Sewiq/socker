@@ -1,12 +1,13 @@
 // Service worker — gra działa offline po pierwszym otwarciu.
-const CACHE = "pilkarzyki-v1";
+const CACHE = "pilkarzyki-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./icons/icon-maskable-512.png"
+  "./icons/icon-maskable-512.png",
+  "./legal/privacy.html"
 ];
 
 self.addEventListener("install", e => {
