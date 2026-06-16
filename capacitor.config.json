@@ -1,6 +1,6 @@
 {
   "appId": "com.tchorzewski.pilkarzyki",
-  "appName": "Piłkarzyki",
+  "appName": "ProStriker",
   "webDir": "www",
   "bundledWebRuntime": false,
   "android": {

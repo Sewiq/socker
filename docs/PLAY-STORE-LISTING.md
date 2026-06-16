@@ -1,4 +1,4 @@
-# Listing Google Play — Piłkarzyki na kartce
+# Listing Google Play — ProStriker
 
 Gotowy do skopiowania w Play Console → **Main store listing** (lub jego polski wariant).
 
@@ -9,10 +9,14 @@ Gotowy do skopiowania w Play Console → **Main store listing** (lub jego polski
 > Max 30 znaków. Polecam:
 
 ```
-Piłkarzyki na kartce
+ProStriker
 ```
 
-(20 znaków — zostaje miejsce na ewentualne „⚽ Piłkarzyki na kartce" jeśli chcesz emoji w nazwie, ale Play nie zawsze emoji renderuje — bezpieczniej zostaw bez)
+(10 znaków — krótki, brandowy)
+
+**Alternatywy z podtytułem (SEO dla starej nazwy):**
+- `ProStriker — Piłkarzyki` (24)
+- `ProStriker · Paper Football` (28)
 
 ---
 
@@ -21,14 +25,14 @@ Piłkarzyki na kartce
 > Max 80 znaków. Wyświetla się na karcie aplikacji nad „Przeczytaj więcej".
 
 ```
-Klasyczna szkolna gra papierowa. Strzel gola, pokonaj bota lub zagraj we dwoje.
+Piłkarzyki na kartce — strzel gola, graj z botem albo online 1v1 ze znajomymi.
 ```
 
-(78 znaków)
+(77 znaków)
 
 **Alternatywy:**
-- `Piłkarzyki w kratkę — szkolny klasyk teraz w telefonie. Bot lub 2 graczy.` (74)
-- `Strzel gola, odbijaj o bandę i kropki — papierowa gra w nowoczesnej formie.` (77)
+- `Papierowa gra w piłkę — bot, 2 graczy lub online 1v1.` (53)
+- `Klasyczne piłkarzyki w kratkę — teraz online z przyjaciółmi.` (60)
 
 ---
 

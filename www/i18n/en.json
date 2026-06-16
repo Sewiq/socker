@@ -1,6 +1,6 @@
 {
-  "app.title": "Paper Football",
-  "app.subtitle": "Score a goal in your opponent's net. Bouncing off a wall or an occupied dot lets you keep playing.",
+  "app.title": "ProStriker",
+  "app.subtitle": "Paper soccer — score a goal, bounce off the wall or an occupied dot to keep going.",
   "settings.mode": "Mode",
   "settings.modeBot": "vs Bot",
   "settings.mode2p": "2 players",
@@ -54,7 +54,7 @@
   "rules.r4.t": "End of game",
   "rules.r4.d": "First goal wins. Whoever gets blocked (no move) loses.",
   "rules.intro": "The <b>blue</b> player (You) shoots into the <b>top</b> goal; the <b>red</b> player (Bot) shoots into the <b>bottom</b>.",
-  "foot.signature": "⚽ Paper Football · Seweryn Chorzewski",
+  "foot.signature": "⚽ ProStriker · prostriker.online",
   "settings.title": "Settings",
   "settings.totalScore": "Total score",
   "status.bounceShort": "🔁 Bounce!",

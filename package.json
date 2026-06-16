@@ -1,7 +1,7 @@
 {
-  "name": "pilkarzyki",
+  "name": "prostriker",
   "version": "0.2.0",
-  "description": "Piłkarzyki na kartce — mobilna gra z reklamami AdMob (Capacitor + Android).",
+  "description": "ProStriker — papierowa gra w piłkę (piłkarzyki na kartce). PWA + Capacitor Android + multiplayer online.",
   "private": true,
   "scripts": {
     "dev": "node scripts/dev-server.js",

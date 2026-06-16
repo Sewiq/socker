@@ -3,8 +3,9 @@
  * Opakowuje protokół z docs/MULTIPLAYER.md. UI rozmawia tylko z window.net —
  * nie zna szczegółów WS. Zdarzenia przez net.on(event, cb).
  *
- * URL serwera: window.MP_SERVER_URL (ustawiany przy deployu produkcyjnym),
- * fallback ws://localhost:3000/ws dla dev.
+ * URL serwera: window.MP_SERVER_URL (ustawiany dla dev / non-produkcji).
+ * Domyślnie produkcja: wss://prostriker.online/ws (ten sam host co gra).
+ * W dev: ustaw window.MP_SERVER_URL = "ws://localhost:3000/ws".
  *
  * Zdarzenia (net.on):
  *   open()                     połączono i wysłano HELLO
@@ -20,7 +21,14 @@
 "use strict";
 
 (function () {
-  const DEFAULT_URL = "ws://localhost:3000/ws";
+  // Default: ws/wss na tym samym hostnamie co gra (production = wss://prostriker.online/ws).
+  // Localhost → ws://localhost:3000/ws (dev wygoda).
+  function defaultUrl() {
+    const h = location.hostname;
+    if (!h || h === "localhost" || h === "127.0.0.1") return "ws://localhost:3000/ws";
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    return proto + "//" + location.host + "/ws";
+  }
 
   let ws = null;
   let connected = false;
@@ -33,7 +41,7 @@
   function on(ev, cb) { (listeners[ev] = listeners[ev] || new Set()).add(cb); return () => listeners[ev].delete(cb); }
   function emit(ev, ...args) { (listeners[ev] || []).forEach(cb => { try { cb(...args); } catch (e) { console.warn(e); } }); }
 
-  function url() { return window.MP_SERVER_URL || DEFAULT_URL; }
+  function url() { return window.MP_SERVER_URL || defaultUrl(); }
 
   function send(frame) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return false;

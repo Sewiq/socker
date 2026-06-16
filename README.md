@@ -1,10 +1,11 @@
-# ⚽ Piłkarzyki — Android (Capacitor + AdMob)
+# ⚽ ProStriker — papierowa gra w piłkę
 
-Mobilna wersja papierowej gry "piłkarzyki na kartce", przeznaczona do sklepu Google Play.
-Gra jest darmowa i wyświetla reklamy Google AdMob (banner u dołu, opcjonalny interstitial).
+Mobilna wersja **piłkarzyków na kartce** pod brandem **ProStriker**.
+Domena: [prostriker.online](https://prostriker.online) · Tryby: bot · 2 graczy · **online 1v1**.
+Darmowa z reklamami Google AdMob (banner u dołu).
 
 📊 **[Status projektu — co zrobione, co w planach →](docs/STATUS.md)**
-🗺️ **[Roadmap →](docs/ROADMAP.md)** · 🌐 **[i18n →](docs/I18N.md)** · 💾 **[Dane →](docs/STORAGE.md)** · 🎮 **[Multiplayer →](docs/MULTIPLAYER.md)** · 🖥️ **[Serwer (socker-server)](https://github.com/Sewiq/socker-server)**
+🗺️ **[Roadmap →](docs/ROADMAP.md)** · 🌐 **[i18n →](docs/I18N.md)** · 💾 **[Dane →](docs/STORAGE.md)** · 🎮 **[Multiplayer →](docs/MULTIPLAYER.md)** · 🚀 **[Deploy na VPS →](docs/DEPLOY.md)** · 🖥️ **[Serwer (socker-server)](https://github.com/Sewiq/socker-server)**
 ⚡ **[Iteracja w przeglądarce — `npm run dev` →](docs/DEV.md)** · 📋 **[Pull → AAB →](docs/NEXT-STEPS.md)**
 
 Cały silnik gry żyje w `www/` jako zwykła PWA (HTML/CSS/JS, bez bibliotek).
