@@ -107,6 +107,19 @@
   .lang-seg button{border:0;background:transparent;padding:7px 10px;border-radius:8px;
     font-size:12px;font-weight:700;color:#4a5a78;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;flex:1}
   .lang-seg button.on{background:var(--ink);color:#fff}
+  /* sekcja Zasady — numerowane karty z ikoną */
+  .rules-summary{font-size:15px}
+  .rule-list{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .rule-list li{display:flex;align-items:flex-start;gap:10px;background:#f7f9fc;
+    border:1px solid #eaeef5;border-radius:10px;padding:9px 11px}
+  .rule-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;
+    font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-top:1px}
+  .rule-ico{flex:0 0 auto;font-size:17px;line-height:1.3}
+  .rule-text{font-size:13px;line-height:1.45}
+  .rule-text b{display:block;color:var(--ink);font-size:13.5px;margin-bottom:1px}
+  .rule-text span{color:#5b6b85}
+  .rule-intro{margin:12px 0 0;font-size:12.5px;color:#6b7a96;line-height:1.5;
+    padding-top:10px;border-top:1px dashed #e2e7ef}
 </style>
 </head>
 <body>
@@ -181,14 +194,32 @@
     <button class="btn" id="privacyBtn" style="width:100%" data-i18n="actions.privacy">Ustawienia prywatności (zgoda na reklamy)</button>
   </div>
 
-  <div class="panel" style="margin-top:12px">
+  <div class="panel rules-panel" style="margin-top:12px">
     <details>
-      <summary data-i18n="rules.title">Zasady</summary>
-      <p data-i18n-html="rules.rule1"></p>
-      <p data-i18n-html="rules.rule2"></p>
-      <p data-i18n-html="rules.rule3"></p>
-      <p data-i18n-html="rules.rule4"></p>
-      <p style="color:#6b7a96" data-i18n-html="rules.intro"></p>
+      <summary><span class="rules-summary">📋 <span data-i18n="rules.title">Zasady</span></span></summary>
+      <ol class="rule-list">
+        <li>
+          <span class="rule-num">1</span>
+          <span class="rule-ico">✏️</span>
+          <div class="rule-text"><b data-i18n="rules.r1.t"></b><span data-i18n="rules.r1.d"></span></div>
+        </li>
+        <li>
+          <span class="rule-num">2</span>
+          <span class="rule-ico">🚫</span>
+          <div class="rule-text"><b data-i18n="rules.r2.t"></b><span data-i18n="rules.r2.d"></span></div>
+        </li>
+        <li>
+          <span class="rule-num">3</span>
+          <span class="rule-ico">🔁</span>
+          <div class="rule-text"><b data-i18n="rules.r3.t"></b><span data-i18n="rules.r3.d"></span></div>
+        </li>
+        <li>
+          <span class="rule-num">4</span>
+          <span class="rule-ico">🏁</span>
+          <div class="rule-text"><b data-i18n="rules.r4.t"></b><span data-i18n="rules.r4.d"></span></div>
+        </li>
+      </ol>
+      <p class="rule-intro" data-i18n-html="rules.intro"></p>
     </details>
   </div>
 
