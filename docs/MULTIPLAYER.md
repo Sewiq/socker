@@ -1,10 +1,11 @@
 # Multiplayer — architektura (Faza 2)
 
-Plan techniczny multiplayera 1v1 dla „Piłkarzyki na kartce". Dokument
-**poprzedza implementację** — pozwala omówić decyzje zanim powstanie serwer.
+Architektura multiplayera 1v1 dla „Piłkarzyki na kartce".
 
-> **Status:** silnik gry wydzielony do `www/engine.js` (PR „mp-engine"), reszta
-> w planie. Pełna roadmapa: [ROADMAP.md → Faza 2](ROADMAP.md).
+> **Status:** ✅ **ZBUDOWANE i działa lokalnie.** Silnik (`www/engine.js`),
+> serwer ([sewiq/socker-server](https://github.com/Sewiq/socker-server)),
+> klient (`www/net.js` + tryb Online) — wszystko spięte, E2E zielone.
+> Zostało: deploy na VPS. Pełna roadmapa: [ROADMAP.md → Faza 2](ROADMAP.md).
 
 ---
 
@@ -210,26 +211,27 @@ Frontend (PWA na GitHub Pages) pobiera URL serwera z `window.MP_SERVER_URL`
 
 ---
 
-## Plan implementacji (kolejne PR-y)
+## Plan implementacji (postęp)
 
-1. **PR „mp-engine"** ✅ obecny — wydzielenie silnika do `www/engine.js` + ten dokument
-2. **PR „mp-server"** — `server/` z protokołem, pokoje, matchmaking, walidacja
-   autorytatywna, testy Vitest na 2 sockety
-3. **PR „mp-client"** — `www/net.js`, UI: przycisk „Online" w trybie, modal lobby
-   (kod / kolejka / status), wpięcie w bieżący flow gry
-4. **PR „mp-deploy"** — Dockerfile, docker-compose, Nginx config, instrukcja
-   na VPS Kynologic, env-konfig
-
-Po każdym PR: pełny smoke test + opis dla user'a.
+1. **Silnik** ✅ — `www/engine.js` (UMD), współdzielony front + serwer (PR #21)
+2. **Serwer** ✅ — [sewiq/socker-server](https://github.com/Sewiq/socker-server):
+   protokół, pokoje, matchmaking, walidacja autorytatywna, testy E2E (Node test runner)
+3. **Klient** ✅ — `www/net.js` + tryb „Online" + lobby (kod / kolejka / status),
+   wpięty w flow gry (PR #22)
+4. **Deploy** ⏳ — `Dockerfile`, `docker-compose.yml`, `nginx/` gotowe w repo serwera;
+   pozostaje uruchomić na VPS Kynologic + ustawić `MP_SERVER_URL` w produkcji
 
 ---
 
-## Decyzje do potwierdzenia przed PR „mp-server"
+## Deploy na VPS — checklist (gdy będzie domena)
 
-- [ ] **Domena/hostname** dla serwera (np. `mp.tchorzewski.pl`, `socker.kynologic.pl`,
-      poddomena GH Pages-friendly)
-- [ ] **Port serwera** w produkcji (domyślnie 3000 wewnątrz Dockera; zewnętrznie 443 przez Nginx)
-- [ ] **Czy publikować repo serwera publicznie** (kod multiplayera można utajnić, ale to
-      łatwiej do open-sourcowania całego stacka)
+- [ ] **Domena/hostname** skierowana na VPS (np. `mp.kynologic.pl`)
+- [ ] Na VPS: `git clone socker-server` → `cp .env.example .env` → ustaw
+      `ALLOWED_ORIGINS=https://sewiq.github.io` → `docker compose up -d --build`
+- [ ] Nginx reverse proxy (plik `nginx/socker.conf.example`) + `certbot --nginx -d domena`
+- [ ] W grze: `window.MP_SERVER_URL = "wss://domena/ws"` w `index.html` (produkcja)
+- [ ] Test: `curl https://domena/health` + dwa urządzenia grają online
 
-Jeśli nie masz teraz odpowiedzi — wybieram sensowne defaulty i potem podmienisz w `.env`.
+> ⚠️ Uwaga środowiskowa: w środowisku z **conda** zmienna `HOST` jest zajęta
+> (triplet kompilatora) i koliduje. Serwer respektuje też `BIND_HOST`; w razie
+> błędu `ENOTFOUND` użyj `HOST=0.0.0.0 npm run dev`.

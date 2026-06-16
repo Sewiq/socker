@@ -1,6 +1,6 @@
 # Status projektu — Piłkarzyki na kartce
 
-Aktualizacja: 16 czerwca 2026 · Wersja: **0.2.0**
+Aktualizacja: 16 czerwca 2026 · Wersja: **0.2.0** · Faza 1 ✅ · Faza 2 (multiplayer) ✅ lokalnie
 
 > Bieżący stan. Plan kierunkowy projektu (fazy 0→4, multiplayer, turnieje, i18n):
 > **[docs/ROADMAP.md](ROADMAP.md)**
@@ -69,14 +69,34 @@ Aktualizacja: 16 czerwca 2026 · Wersja: **0.2.0**
   poziom bota, gole/blokady, reset — liczone z `GameRecord[]`
 - [x] **XP/level w UI** — flaga w topbarze, pasek postępu w profilu
 - [x] **Bot adaptacyjny (Auto)** — dopasowuje poziom do wyników gracza (rubber-band z historii `storage.js`)
+- [x] **Odświeżona sekcja Zasady** — numerowane karty z ikonami
 - [ ] Mocniejszy bot (minimaks) — opcjonalnie
-- [ ] Faza 2: multiplayer online
+
+### Faza 2 — multiplayer online ✅ (działa lokalnie)
+- [x] **Silnik współdzielony** — `www/engine.js` (UMD: przeglądarka + Node),
+  ten sam kod waliduje ruchy na froncie i serwerze
+- [x] **Serwer autorytatywny** — [sewiq/socker-server](https://github.com/Sewiq/socker-server)
+  (osobne repo): Node + `ws`, pokoje po kodzie, matchmaking, walidacja każdego
+  ruchu, anty-DoS (rate limit, IP limit), testy E2E zielone
+- [x] **Klient** — `www/net.js` + tryb „Online" + lobby (utwórz pokój / kod /
+  matchmaking), pasek przeciwnika, status tury
+- [x] **Zweryfikowane E2E** — 2 przeglądarki grają 1v1 przez serwer, ruchy
+  zsynchronizowane, zero desyncu
+- [ ] **Deploy na VPS Kynologic** (Docker + Nginx + WSS) — żeby grać przez internet
+- [ ] Reconnect po zerwaniu (UUID już wysyłany w HELLO)
+- [ ] Zapis wyników online do statystyk
 
 ### Dokumentacja
 - [x] `README.md` — przegląd projektu
 - [x] `docs/BUILD.md` — build APK/AAB krok po kroku + częste błędy
 - [x] `docs/ADMOB.md` — konfiguracja AdMob i UMP
 - [x] `docs/PLAY-STORE-LISTING.md` — opisy PL, kategorie, Data Safety
+- [x] `docs/STORAGE.md` — warstwa danych pod chmurę
+- [x] `docs/I18N.md` — wielojęzyczność
+- [x] `docs/DEV.md` — iteracja w przeglądarce
+- [x] `docs/MULTIPLAYER.md` — architektura + protokół multiplayera
+- [x] `docs/NEXT-STEPS.md` — checklista pull → AAB
+- [x] `docs/ROADMAP.md` — mapa drogowa faz 0→4
 - [x] `docs/STATUS.md` — ten plik
 
 ### Infrastruktura
@@ -157,44 +177,37 @@ Te zmiany są lokalnie u Sewiqa ale nie w repo:
 
 ---
 
-## 🌐 Pomysł na przyszłość: Online multiplayer / turnieje
+## 🌐 Multiplayer — ZBUDOWANY (działa lokalnie)
 
-**Status:** szkic koncepcji, do realizacji **po starcie w Play Store** i pierwszych 100+ instalacjach (jako walidacja że jest popyt).
+**Status:** ✅ pełny stack 1v1 działa na localhost. Decyzje z planu (osobne
+repo serwera, oba tryby — pokój po kodzie + matchmaking) zrealizowane.
+Architektura i protokół: [docs/MULTIPLAYER.md](MULTIPLAYER.md).
 
-### Trzy poziomy ambicji
-- **A) Random match 1v1** — system matchmakingu (chcesz grać → czekasz → trafiasz z kimś)
-- **B) Pokoje z linkiem** — utwórz pokój, podziel się kodem/linkiem ze znajomym
-- **C) Turnieje** — drabinka, zapisy, ranking ELO
+### Co działa
+- **Pokoje po 5-znakowym kodzie** — utwórz → podziel się kodem → znajomy dołącza
+- **Losowy matchmaking** — „Znajdź przeciwnika" → kolejka FIFO → parowanie
+- **Serwer autorytatywny** — każdy ruch walidowany `engine.isLegalMove`,
+  klient nigdy nie ufa sam sobie → cheat-odporne
+- **Rewanż**, **wyjście z gry**, pasek przeciwnika (flaga + nick)
 
-### Architektura (szkicowa)
-```
-Telefon ←→ Serwer Node + Socket.IO ←→ Telefon
-                  │
-                  ▼
-              Postgres (Supabase free)
-```
-
-### Stack proponowany
-| Komponent | Wybór | Powód |
+### Zrealizowany stack (różni się od pierwotnego szkicu)
+| Komponent | Wybór | Uwaga |
 |---|---|---|
-| Backend | Node.js + Socket.IO (TypeScript) | Reużycie kodu z frontu, popularne |
-| Hosting | Fly.io / Render (free tier) | 0 zł na start |
-| Baza | Supabase Postgres (free) | Auth + baza w jednym |
-| Auth | Anonymous UUID + opcjonalnie Google Sign-In | Niski tarcie |
-| Protokół | WebSocket (Socket.IO) | Realtime <50ms |
+| Backend | Node.js + czysty `ws` | lżejszy niż Socket.IO (~50 KB) |
+| Walidacja | współdzielony `engine.js` | ten sam kod front + serwer |
+| Stan | in-memory `Map` | bez bazy w MVP; restart = czysto |
+| Repo serwera | osobne: `sewiq/socker-server` | własny cykl release |
+| Hosting | docelowo VPS Kynologic | Docker + Nginx + WSS (jeszcze nie wdrożone) |
 
-### Kluczowe wyzwania
-- **Spójność stanu** — kto jest źródłem prawdy o stanie planszy
-- **Lag compensation** — co jeśli gracz traci sygnał w połowie ruchu
-- **Anti-cheat** — co jeśli ktoś zmodyfikuje JS i pośle nielegalny ruch
-- **Polityka prywatności** — rozszerzyć o zbieranie nicków, wyników, IP
-- **AdMob** — zmienić strategię (interstitial między rundami zamiast banner ciągle)
+### Zostało do publicznego online
+- Deploy serwera na VPS (pliki gotowe: `Dockerfile`, `docker-compose.yml`, `nginx/`)
+- `window.MP_SERVER_URL = wss://domena/ws` w produkcyjnym `index.html`
+- Reconnect po zerwaniu połączenia
+- Zapis wyników online do statystyk
 
-### Szacunkowy nakład pracy
-- Random match 1v1: 2-3 sesje
-- Pokoje z linkiem: +1 sesja
-- Ranking ELO: +1 sesja
-- Turnieje: +2-3 sesje
+### Faza 3 (przyszłość) — turnieje
+- Drabinki, ranking ELO, **rankingi krajowe** (flaga z profilu = gotowa podstawa)
+- Wymaga persystencji (Postgres) — pierwszy moment gdy in-memory nie wystarczy
 
 ---
 
