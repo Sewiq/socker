@@ -1,6 +1,6 @@
 {
-  "app.title": "Piłkarzyki na kartce",
-  "app.subtitle": "Strzel gola w bramce przeciwnika. Odbicie o bandę lub zajętą kropkę = grasz dalej.",
+  "app.title": "ProStriker",
+  "app.subtitle": "Piłkarzyki na kartce — strzel gola, odbij o bandę lub zajętą kropkę i graj dalej.",
   "settings.mode": "Tryb",
   "settings.modeBot": "Z botem",
   "settings.mode2p": "2 graczy",
@@ -54,7 +54,7 @@
   "rules.r4.t": "Koniec gry",
   "rules.r4.d": "Pierwszy gol wygrywa. Kto się zablokuje (brak ruchu) — przegrywa.",
   "rules.intro": "Gracz <b>niebieski</b> (Ty) strzela do <b>górnej</b> bramki, gracz <b>czerwony</b> (Bot) do <b>dolnej</b>.",
-  "foot.signature": "⚽ Piłkarzyki na kartce · Seweryn Chorzewski",
+  "foot.signature": "⚽ ProStriker · prostriker.online",
   "settings.title": "Ustawienia",
   "settings.totalScore": "Wynik łączny",
   "status.bounceShort": "🔁 Odbicie!",

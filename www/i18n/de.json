@@ -1,6 +1,6 @@
 {
-  "app.title": "Papierfußball",
-  "app.subtitle": "Schieße ein Tor im Gegnernetz. Ein Abprall an der Bande oder an einem besetzten Punkt lässt dich weiterspielen.",
+  "app.title": "ProStriker",
+  "app.subtitle": "Papierfußball — schieße ein Tor, prall an der Bande oder besetzten Punkt ab und spiele weiter.",
   "settings.mode": "Modus",
   "settings.modeBot": "Gegen Bot",
   "settings.mode2p": "2 Spieler",
@@ -54,7 +54,7 @@
   "rules.r4.t": "Spielende",
   "rules.r4.d": "Das erste Tor gewinnt. Wer blockiert ist (kein Zug), verliert.",
   "rules.intro": "Der <b>blaue</b> Spieler (Du) schießt ins <b>obere</b> Tor; der <b>rote</b> Spieler (Bot) ins <b>untere</b>.",
-  "foot.signature": "⚽ Papierfußball · Seweryn Chorzewski",
+  "foot.signature": "⚽ ProStriker · prostriker.online",
   "settings.title": "Einstellungen",
   "settings.totalScore": "Gesamtpunktzahl",
   "status.bounceShort": "🔁 Abprall!",

@@ -1,7 +1,7 @@
 {
-  "name": "Piłkarzyki na kartce",
-  "short_name": "Piłkarzyki",
-  "description": "Klasyczna gra papierowa — strzel gola w jednej turze. Graj z botem lub we dwoje.",
+  "name": "ProStriker",
+  "short_name": "ProStriker",
+  "description": "Papierowa gra w piłkę — strzel gola, graj z botem albo online 1v1.",
   "lang": "pl",
   "start_url": "./index.html",
   "scope": "./",

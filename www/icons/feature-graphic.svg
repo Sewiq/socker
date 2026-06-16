@@ -50,16 +50,17 @@
   <line x1="32" y1="0" x2="32" y2="500" stroke="#d9594e" stroke-width="2" opacity="0.6"/>
 
   <!-- lewa strona: nazwa i hasło -->
-  <text x="80" y="160" font-family="Segoe UI, Arial, sans-serif" font-size="64" font-weight="800" fill="#2e4a7d">⚽ Piłkarzyki</text>
-  <text x="80" y="210" font-family="Segoe UI, Arial, sans-serif" font-size="36" font-weight="700" fill="#2e4a7d">na kartce</text>
-  <text x="80" y="290" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="400" fill="#5b6b85">Klasyczna szkolna gra</text>
-  <text x="80" y="320" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="400" fill="#5b6b85">teraz w Twoim telefonie</text>
+  <text x="80" y="160" font-family="Segoe UI, Arial, sans-serif" font-size="64" font-weight="800" fill="#2e4a7d">⚽ ProStriker</text>
+  <text x="80" y="210" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#2e4a7d">Piłkarzyki na kartce</text>
+  <text x="80" y="280" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="400" fill="#5b6b85">Klasyczna szkolna gra</text>
+  <text x="80" y="310" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="400" fill="#5b6b85">w Twoim telefonie</text>
 
   <!-- bullet pointy -->
   <g font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="600" fill="#23324f">
-    <text x="80" y="390">✓ Graj z botem (3 poziomy)</text>
-    <text x="80" y="420">✓ Tryb 2 graczy na jednym ekranie</text>
-    <text x="80" y="450">✓ Działa offline</text>
+    <text x="80" y="380">✓ Bot z poziomami trudności</text>
+    <text x="80" y="410">✓ 2 graczy na jednym ekranie</text>
+    <text x="80" y="440">✓ Online 1v1 — graj ze znajomymi</text>
+    <text x="80" y="470">✓ Działa offline</text>
   </g>
 
   <!-- prawa strona: ilustracja boiska z piłką -->
