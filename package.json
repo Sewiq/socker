@@ -10,15 +10,16 @@
     "bundle:android": "cap sync android && cd android && ./gradlew bundleRelease"
   },
   "dependencies": {
-    "@capacitor/android": "^6.1.2",
-    "@capacitor/app": "^6.0.1",
-    "@capacitor/core": "^6.1.2",
-    "@capacitor/haptics": "^6.0.1",
-    "@capacitor/splash-screen": "^6.0.2",
-    "@capacitor/status-bar": "^6.0.1",
-    "@capacitor-community/admob": "^6.3.0"
+    "@capacitor-community/admob": "^8.0.0",
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.1.2"
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.4.0"
   }
 }
