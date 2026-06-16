@@ -14,6 +14,7 @@
 <script src="storage.js"></script>
 <script src="countries.js"></script>
 <script src="engine.js"></script>
+<script src="net.js"></script>
 <style>
   :root{
     --paper:#FBF8EC;
@@ -126,6 +127,29 @@
   .rule-intro{margin:12px 0 0;font-size:12.5px;color:#6b7a96;line-height:1.5;
     padding-top:10px;border-top:1px dashed #e2e7ef}
 
+  /* lobby online */
+  .lobby-btn{width:100%}
+  .lobby-or{text-align:center;font-size:12px;color:#9fb3cf;font-weight:700;text-transform:uppercase;
+    letter-spacing:1px;margin:12px 0}
+  .lobby-join{display:flex;gap:8px}
+  .lobby-join input{flex:1;border:1px solid #d4dae6;border-radius:10px;padding:10px 12px;
+    font-size:18px;font-weight:800;letter-spacing:3px;text-align:center;text-transform:uppercase;font-family:inherit}
+  .lobby-join input:focus{outline:none;border-color:var(--ink)}
+  .lobby-status{margin-top:12px;font-size:13px;color:#6b7a96;text-align:center}
+  #lobbyWaiting{text-align:center;padding:8px 0}
+  .lobby-wait-ico{font-size:40px;animation:pulse 1.4s ease-in-out infinite}
+  .lobby-wait-title{font-size:16px;font-weight:700;color:var(--ink);margin:8px 0 14px}
+  .lobby-code-box{background:#f7f9fc;border:1px solid #e2e7ef;border-radius:12px;padding:14px;margin-bottom:16px}
+  .lobby-code-lbl{display:block;font-size:12px;color:#6b7a96;margin-bottom:6px}
+  .lobby-code-val{font-size:34px;font-weight:800;color:var(--ink2);letter-spacing:6px}
+  /* pasek przeciwnika online */
+  .opp-bar{display:none;align-items:center;gap:8px;font-size:13px;font-weight:600;
+    padding:7px 10px;border-radius:10px;background:#eef3fb;border:1px solid #d7e3f5;margin-bottom:8px}
+  .opp-bar.show{display:flex}
+  .opp-bar .flag{font-size:18px}
+  .opp-bar .vs{color:#9fb3cf;font-weight:700}
+  .opp-bar .leave{margin-left:auto;font-size:12px;padding:4px 10px}
+
   /* SHEET — profil / picker / statystyki (większy modal-card) */
   .modal-card.sheet{text-align:left;max-width:420px;max-height:88vh;overflow-y:auto;padding:18px}
   .sheet-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
@@ -196,6 +220,7 @@
         <div class="seg" id="modeSeg">
           <button data-mode="bot" class="on" data-i18n="settings.modeBot">Z botem</button>
           <button data-mode="2p" data-i18n="settings.mode2p">2 graczy</button>
+          <button data-mode="online" data-i18n="settings.modeOnline">Online</button>
         </div>
       </div>
       <div class="seg-group" id="diffGroup">
@@ -221,6 +246,14 @@
         <button class="btn" id="scoreReset" style="width:100%">↺ <span data-i18n="actions.resetScore">Wyzeruj wynik</span></button>
       </div>
     </div>
+  </div>
+
+  <div class="opp-bar" id="oppBar">
+    <span class="flag" id="oppFlag">🏳️</span>
+    <span id="oppNick">—</span>
+    <span class="vs" data-i18n="mp.vs">vs</span>
+    <span id="oppYou" data-i18n="player.you">Ty</span>
+    <button class="btn leave" id="oppLeave" data-i18n="mp.leave">Wyjdź</button>
   </div>
 
   <div class="status">
@@ -306,6 +339,40 @@
     </div>
   </div>
 
+  <!-- LOBBY ONLINE -->
+  <div class="modal" id="lobbyModal" hidden>
+    <div class="modal-card sheet">
+      <div class="sheet-head">
+        <h2 class="sheet-title" data-i18n="mp.title">Gra online</h2>
+        <button class="icon-btn" id="lobbyCloseX" aria-label="×">✕</button>
+      </div>
+      <div id="lobbyBody">
+        <!-- WIDOK: menu -->
+        <div id="lobbyMenu">
+          <button class="btn primary lobby-btn" id="lobbyCreate" data-i18n="mp.createRoom">Utwórz pokój</button>
+          <div class="lobby-or" data-i18n="mp.or">albo</div>
+          <div class="lobby-join">
+            <input type="text" id="lobbyCode" maxlength="5" placeholder="KOD" autocomplete="off" autocapitalize="characters">
+            <button class="btn" id="lobbyJoin" data-i18n="mp.join">Dołącz</button>
+          </div>
+          <div class="lobby-or" data-i18n="mp.or">albo</div>
+          <button class="btn lobby-btn" id="lobbyFind" data-i18n="mp.findMatch">Znajdź przeciwnika</button>
+          <div class="lobby-status" id="lobbyConnHint" data-i18n="mp.connecting" hidden>Łączenie z serwerem…</div>
+        </div>
+        <!-- WIDOK: oczekiwanie -->
+        <div id="lobbyWaiting" hidden>
+          <div class="lobby-wait-ico">⏳</div>
+          <div class="lobby-wait-title" id="lobbyWaitTitle" data-i18n="mp.waiting">Czekam na przeciwnika…</div>
+          <div class="lobby-code-box" id="lobbyCodeBox" hidden>
+            <span class="lobby-code-lbl" data-i18n="mp.shareCode">Podaj znajomemu kod:</span>
+            <span class="lobby-code-val" id="lobbyCodeVal">—</span>
+          </div>
+          <button class="btn lobby-btn" id="lobbyCancel" data-i18n="mp.cancel">Anuluj</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="panel" id="privacyPanel" style="margin-top:12px;display:none">
     <button class="btn" id="privacyBtn" style="width:100%" data-i18n="actions.privacy">Ustawienia prywatności (zgoda na reklamy)</button>
   </div>
@@ -360,6 +427,11 @@ const svgW=padX*2+W*cell, svgH=padY*2+(H+2)*cell;
 
 // ---------- stan gry ----------
 let mode="bot", diff="medium", busy=false;
+// ---- stan online ----
+let onlineNum=0;        // 1|2 — który gracz jestem w pokoju
+let onlinePlaying=false;
+let onlineOpp=null;     // {nick, country}
+let netWired=false;
 let state, history=[];
 function freshState(){
   // bazowy stan z silnika + pola tylko-frontowe (UI/historia/audytka)
@@ -549,7 +621,11 @@ function render(){
   gB.appendChild(el("circle",{cx:sx(state.ball[0]),cy:sy(state.ball[1]),r:10.5,
     fill:"var(--ball)",stroke:"var(--ball-ring)","stroke-width":3}));
   // ruchy gracza
-  const humanTurn = !state.winner && !busy && (mode==="2p" || state.player===1);
+  const humanTurn = !state.winner && !busy && (
+    mode==="2p" ||
+    (mode==="bot" && state.player===1) ||
+    (mode==="online" && onlinePlaying && state.player===onlineNum)
+  );
   if(humanTurn){
     for(const m of legalMoves(state.ball,state.used)){
       gT.appendChild(el("circle",{class:"target-ring",cx:sx(m[0]),cy:sy(m[1]),r:13}));
@@ -581,6 +657,11 @@ function updateStatus(){
   }
   const p=state.player;
   chip.style.background=p===1?"var(--ink)":"var(--ink2)";
+  if(mode==="online"){
+    txt.textContent = i18n.t(p===onlineNum ? "mp.yourTurn" : "mp.oppTurn");
+    tag.classList.toggle("show", state.bounce);
+    return;
+  }
   const who = p===1
     ? i18n.t(mode==="bot" ? "player.you" : "player.p1")
     : i18n.t(mode==="bot" ? "player.botThinking" : "player.p2");
@@ -591,6 +672,12 @@ function updateStatus(){
 
 function onTarget(m){
   if(busy||state.winner)return;
+  if(mode==="online"){
+    // online: nie aplikujemy lokalnie — serwer waliduje i odeśle MOVE_OK
+    if(!onlinePlaying || state.player!==onlineNum) return;
+    net.sendMove(m);
+    return;
+  }
   pushHist();
   applyMove(m,state.player);
   render();
@@ -600,11 +687,16 @@ function onTarget(m){
 // ---------- UI ----------
 document.getElementById("modeSeg").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
+  const prevMode = mode;
   mode=b.dataset.mode;
   [...e.currentTarget.children].forEach(c=>c.classList.toggle("on",c===b));
   document.getElementById("diffGroup").style.display=mode==="bot"?"":"none";
+  document.getElementById("scorePanel").style.display = mode==="online" ? "none" : "";
+  // wychodząc z online — posprzątaj połączenie
+  if(prevMode==="online" && mode!=="online") leaveOnline();
   renderScore();
-  newGame();
+  if(mode==="online"){ openLobby(); }
+  else { newGame(); }
 });
 
 // settings popover — toggle + zamykanie klikiem poza
@@ -629,8 +721,16 @@ document.getElementById("diffSeg").addEventListener("click",e=>{
   [...e.currentTarget.children].forEach(c=>c.classList.toggle("on",c===b));
   newGame();
 });
-document.getElementById("newBtn").addEventListener("click",newGame);
-document.getElementById("undoBtn").addEventListener("click",undo);
+document.getElementById("newBtn").addEventListener("click",()=>{
+  if(mode==="online"){
+    // w grze online: po końcu → rewanż, w trakcie → otwórz lobby ponownie
+    if(state && state.winner && window.net) net.rematch();
+    else openLobby();
+    return;
+  }
+  newGame();
+});
+document.getElementById("undoBtn").addEventListener("click",()=>{ if(mode!=="online") undo(); });
 document.getElementById("scoreReset").addEventListener("click",()=>{
   score={bot:{p1:0,p2:0},"2p":{p1:0,p2:0}};
   saveScore();renderScore();
@@ -868,6 +968,155 @@ function renderStats(){
     }
   });
 }
+
+// ---------- ONLINE: lobby + net ----------
+function lobbyView(which){
+  document.getElementById("lobbyMenu").hidden = which!=="menu";
+  document.getElementById("lobbyWaiting").hidden = which!=="waiting";
+}
+function profileForNet(){
+  const p = window.storage ? storage.getProfile() : {};
+  return {
+    playerId: p.id || ("anon-"+Math.random().toString(36).slice(2)),
+    nick: (p.nick && p.nick.trim()) || i18n.t("player.defaultNick"),
+    country: (p.avatar && p.avatar.country) || null
+  };
+}
+async function ensureConnected(){
+  if(!window.net) return false;
+  if(net.isConnected()) return true;
+  try{ await net.connect(profileForNet()); return true; }
+  catch(e){ return false; }
+}
+function wireNet(){
+  if(netWired || !window.net) return;
+  netWired = true;
+
+  net.on("room", (room)=>{
+    if(room.state==="queued"){
+      lobbyView("waiting");
+      document.getElementById("lobbyWaitTitle").textContent = i18n.t("mp.waiting");
+      document.getElementById("lobbyCodeBox").hidden = true;
+      return;
+    }
+    if(room.state==="waiting"){
+      lobbyView("waiting");
+      document.getElementById("lobbyWaitTitle").textContent = i18n.t("mp.waiting");
+      const box=document.getElementById("lobbyCodeBox");
+      if(room.code){ box.hidden=false; document.getElementById("lobbyCodeVal").textContent=room.code; }
+      return;
+    }
+    if(room.state==="playing"){
+      onlineNum = net.myPlayer();
+      onlineOpp = (room.players||[]).find(p=>!p.you) || null;
+      onlinePlaying = true;
+      hideModal("lobbyModal");
+      showOppBar();
+    }
+    if(room.state==="over"){
+      onlinePlaying = false;
+    }
+  });
+
+  net.on("state", (snap)=>{
+    state = ENG.deserialize(snap);
+    state.recorded = true;   // online: nie zapisujemy do lokalnych statystyk (na razie)
+    render();
+  });
+
+  net.on("moveOk", ({snap})=>{
+    state = ENG.deserialize(snap);
+    state.recorded = true;
+    buzzSafe(state.bounce && !state.winner ? "Light" : (state.winner ? "Heavy" : "Light"));
+    render();
+    if(state.winner){
+      onlinePlaying=false;
+      showOnlineEnd();
+    }
+  });
+
+  net.on("opponentLeft", ()=>{
+    onlinePlaying=false;
+    if(mode==="online"){
+      const banner=document.getElementById("banner");
+      banner.className="banner win1"; banner.textContent="👋 "+i18n.t("mp.oppLeft");
+    }
+    hideOppBar();
+  });
+
+  net.on("error", (e)=>{
+    const map={ROOM_NOT_FOUND:"mp.badCode", ROOM_FULL:"mp.roomFull"};
+    const key=map[e.code];
+    if(key){
+      const hint=document.getElementById("lobbyConnHint");
+      hint.hidden=false; hint.textContent=i18n.t(key);
+      lobbyView("menu");
+    }
+  });
+
+  net.on("close", ()=>{
+    onlinePlaying=false;
+    if(mode==="online"){
+      const hint=document.getElementById("lobbyConnHint");
+      if(hint){ hint.hidden=false; hint.textContent=i18n.t("mp.connError"); }
+    }
+  });
+}
+function showOppBar(){
+  const bar=document.getElementById("oppBar");
+  document.getElementById("oppFlag").textContent = onlineOpp&&onlineOpp.country ? COUNTRIES.flagEmoji(onlineOpp.country) : "🏳️";
+  document.getElementById("oppNick").textContent = onlineOpp&&onlineOpp.nick || "—";
+  bar.classList.add("show");
+}
+function hideOppBar(){ document.getElementById("oppBar").classList.remove("show"); }
+function showOnlineEnd(){
+  const iWon = state.winner===onlineNum;
+  const banner=document.getElementById("banner");
+  banner.className="banner "+(iWon?"win1":"win2");
+  banner.textContent = (iWon?"🏆 ":"")+i18n.t(iWon?"mp.youWin":"mp.youLose");
+}
+async function openLobby(){
+  // świeży boardview
+  state=freshState(); render(); hideOppBar();
+  wireNet();
+  showModal("lobbyModal"); lobbyView("menu");
+  document.getElementById("lobbyConnHint").hidden=true;
+  document.getElementById("lobbyCode").value="";
+  const ok = await ensureConnected();
+  if(!ok){
+    const hint=document.getElementById("lobbyConnHint");
+    hint.hidden=false; hint.textContent=i18n.t("mp.connError");
+  }
+}
+function leaveOnline(){
+  onlinePlaying=false; hideOppBar();
+  if(window.net && net.isConnected()) net.leave();
+}
+// przyciski lobby
+document.getElementById("lobbyCloseX").addEventListener("click",()=>{
+  hideModal("lobbyModal");
+  // wróć do trybu bot
+  document.querySelector('#modeSeg button[data-mode="bot"]').click();
+});
+document.getElementById("lobbyCreate").addEventListener("click", async ()=>{
+  if(await ensureConnected()) net.createRoom();
+});
+document.getElementById("lobbyJoin").addEventListener("click", async ()=>{
+  const code=document.getElementById("lobbyCode").value.trim().toUpperCase();
+  if(code.length!==5) return;
+  if(await ensureConnected()) net.joinRoom(code);
+});
+document.getElementById("lobbyFind").addEventListener("click", async ()=>{
+  if(await ensureConnected()) net.findMatch();
+});
+document.getElementById("lobbyCancel").addEventListener("click",()=>{
+  if(window.net) net.leave();
+  lobbyView("menu");
+});
+document.getElementById("oppLeave").addEventListener("click",()=>{
+  leaveOnline();
+  document.querySelector('#modeSeg button[data-mode="bot"]').click();
+});
 
 // start gry — dopiero gdy słownik i dane gracza załadowane
 Promise.all([i18n.ready, window.storage ? storage.ready : Promise.resolve()]).then(()=>{
