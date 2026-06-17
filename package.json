@@ -1,6 +1,6 @@
 {
   "name": "prostriker",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "ProStriker — papierowa gra w piłkę (piłkarzyki na kartce). PWA + Capacitor Android + multiplayer online.",
   "private": true,
   "scripts": {

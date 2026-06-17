@@ -1294,16 +1294,21 @@ async function initNative(){
     await requestConsent(AdMob);
     await AdMob.initialize({ initializeForTesting: AD_TESTING });
     // Banner renderowany jest natywnie POZA WebView (overlay), więc treść
-    // strony go nie widzi i się chowa pod nim. Słuchamy bannerSize i
-    // ustawiamy CSS var, którym .wrap rezerwuje miejsce na dole.
+    // strony go nie widzi i się chowa pod nim. Słuchamy bannerAdSizeChanged
+    // (capacitor-community/admob 8.x) i ustawiamy CSS var, którym .wrap
+    // rezerwuje miejsce na dole — żeby da się przewinąć ponad banner.
     const setBannerPad = (h) => {
-      const px = Math.max(0, Number(h) || 0);
+      // Plugin podaje wysokość w dp; mnożymy *1.1 jako bufor dla density
+      // wariancji i drobnego padding'u, żeby stopka miała trochę luzu.
+      const raw = Math.max(0, Number(h) || 0);
+      const px = raw > 0 ? Math.round(raw * 1.1) : 0;
       document.documentElement.style.setProperty("--ad-banner-pad", px + "px");
     };
-    AdMob.addListener("bannerSize", (info) => setBannerPad(info && info.height));
-    AdMob.addListener("bannerViewClosed", () => setBannerPad(0));
-    // Fallback gdyby bannerSize nie nadszedł (różne wersje pluginu):
-    setBannerPad(60);
+    AdMob.addListener("bannerAdSizeChanged", (info) => setBannerPad(info && info.height));
+    AdMob.addListener("bannerAdClosed", () => setBannerPad(0));
+    // Fallback przed eventem (banner ADAPTIVE bywa 50-100px na różnych ekranach;
+    // dajemy 90px żeby nawet bez eventu stopka się mieściła).
+    setBannerPad(90);
     await AdMob.showBanner({
       adId: AD_UNIT_BANNER,
       adSize: "ADAPTIVE_BANNER",
