@@ -15,3 +15,8 @@ keystore.properties
 .idea/
 dist/
 *.log
+
+# Deploy secrets (Let's Encrypt config, env z hasłami)
+deploy/.env
+deploy/certbot/conf/
+deploy/certbot/www/

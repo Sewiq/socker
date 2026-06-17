@@ -1,295 +1,221 @@
-# Deploy ProStriker na VPS
+# 🚀 Deploy F0 — 1 VM (Debian 12 + docker-compose)
 
-Pełny plan postawienia produkcyjnego stacka na własnym VPS.
+Runbook od pustej VM do działającego `https://prostriker.online`.
 
-**Stack docelowy:** wszystko pod `prostriker.online` (1 domena, 1 serwer):
-- `https://prostriker.online/` — gra (PWA, statyki z Nginx)
-- `https://prostriker.online/ws` — multiplayer (WebSocket, Node przez reverse proxy)
-- `https://prostriker.online/legal/privacy.html` — polityka prywatności
-- `https://prostriker.online/app-ads.txt` — autoryzacja AdMob
+Stos: **nginx + mp-server (Node) + certbot** w docker-compose.
+Czas: ~30-40 min za pierwszym razem, ~5 min potem (już tylko `git pull && docker compose up -d`).
 
 ---
 
-## Wymagania na VPS
+## 0. Założenia
 
-| Komponent | Wersja | Po co |
-|---|---|---|
-| Debian 12 / Ubuntu 22.04+ | — | system bazowy |
-| Docker + Compose plugin | 24+ | uruchomienie `socker-server` |
-| Nginx | 1.22+ | reverse proxy + statyki + TLS |
-| Certbot | dowolny | Let's Encrypt cert auto-odnawialny |
-| Git | 2.30+ | clone repo |
-
-Minimum sprzętowe: **1 vCPU / 1 GB RAM / 10 GB SSD**. To wystarcza na setki równoczesnych pokoi.
+- VM: **Debian 12**, 2 vCPU, 2 GB RAM, 20 GB SSD, **publiczny IP statyczny**
+- DNS: `prostriker.online` zarejestrowana, **rekordy A wskazują na IP VM**
+- SSH: dostęp jako użytkownik z `sudo` (root też OK)
 
 ---
 
-## Krok 0 — DNS (zanim ruszysz na VPS)
-
-W panelu rejestratora domeny `prostriker.online` ustaw:
-
-```
-A     prostriker.online           → <IP_TWOJEGO_VPS>
-A     www.prostriker.online       → <IP_TWOJEGO_VPS>
-```
-
-Czas propagacji: 5 min – 24h. Sprawdź: `dig prostriker.online +short` na VPS.
-
----
-
-## Krok 1 — przygotowanie VPS (jednorazowo)
-
-Po `ssh user@vps` jako root (lub przez `sudo`):
+## 1. Hardening podstawowy (15 min, raz)
 
 ```bash
-# system update + podstawy
-apt update && apt upgrade -y
-apt install -y git curl ufw
+# Update systemu
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl git ca-certificates fail2ban unattended-upgrades ufw
 
-# firewall
-ufw allow 22/tcp
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw --force enable
+# SSH na non-standard port + tylko klucz
+sudo sed -i 's/^#Port 22/Port 2222/' /etc/ssh/sshd_config
+sudo sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+sudo systemctl restart sshd
 
-# Docker (oficjalny skrypt)
-curl -fsSL https://get.docker.com | sh
-systemctl enable --now docker
+# UFW
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 2222/tcp comment 'SSH'
+sudo ufw allow 80/tcp   comment 'HTTP (certbot)'
+sudo ufw allow 443/tcp  comment 'HTTPS + WSS'
+sudo ufw --force enable
+sudo ufw status
 
-# Nginx + Certbot
-apt install -y nginx certbot python3-certbot-nginx
-systemctl enable --now nginx
+# Automatyczne security updates
+sudo dpkg-reconfigure --priority=low unattended-upgrades
 ```
 
-Sprawdź: `docker --version`, `nginx -v`, `certbot --version`.
+**Test SSH na nowym porcie z drugiego terminala PRZED wylogowaniem:**
+`ssh -p 2222 user@<IP>`. Jak działa — kontynuuj.
 
 ---
 
-## Krok 2 — wgranie kodu
+## 2. Docker + docker-compose plugin
 
 ```bash
-mkdir -p /opt && cd /opt
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+newgrp docker
 
-# Serwer multiplayer
+docker --version
+docker compose version
+```
+
+---
+
+## 3. Klonowanie repo
+
+```bash
+sudo mkdir -p /opt/prostriker
+sudo chown $USER:$USER /opt/prostriker
+cd /opt/prostriker
+
+git clone https://github.com/Sewiq/socker.git
 git clone https://github.com/Sewiq/socker-server.git
-cd socker-server
+
+# Layout:
+# /opt/prostriker/socker/
+# /opt/prostriker/socker-server/
+ls
+```
+
+---
+
+## 4. Konfiguracja env
+
+```bash
+cd /opt/prostriker/socker/deploy
 cp .env.example .env
 nano .env
-# Ustaw:
-#   PORT=3000
-#   BIND_HOST=127.0.0.1                                 (Nginx proxy_pass, nie bezpośrednio)
-#   ALLOWED_ORIGINS=https://prostriker.online,https://www.prostriker.online
-#   LOG_LEVEL=info
-docker compose up -d --build
+```
 
-# sprawdź że serwer wstał
-curl http://127.0.0.1:3000/health
-# {"ok":true,"rooms":0,"queued":0,"uptimeSec":...}
+W `.env`:
+- `DOMAIN=prostriker.online`
+- `EMAIL_LE=<twój-email>` (do notyfikacji LE o wygasającym cercie)
+- `STAGING=1` na pierwszy raz (test cert); `0` na prawdziwy
+- ewentualne env dla mp-server (PORT, NODE_ENV)
 
-# Gra (statyki)
-cd /opt
-git clone https://github.com/Sewiq/socker.git prostriker-web
-# nic więcej - Nginx serwuje pliki bezpośrednio z prostriker-web/
+---
+
+## 5. Sprawdzenie DNS
+
+```bash
+dig +short prostriker.online @1.1.1.1
+dig +short www.prostriker.online @1.1.1.1
+# Oba powinny zwrócić IP Twojej VM. Jeśli puste — czekaj na propagację.
 ```
 
 ---
 
-## Krok 3 — Nginx (root domain → gra + /ws → multiplayer)
+## 6. Bootstrap Let's Encrypt (staging)
+
+Pierwszy raz `STAGING=1` żeby uniknąć rate-limitów LE w razie błędu.
 
 ```bash
-nano /etc/nginx/sites-available/prostriker.online
+cd /opt/prostriker/socker/deploy
+./init-letsencrypt.sh
 ```
 
-Wklej:
+Skrypt:
+1. Tworzy dummy cert (samopodpisany)
+2. Startuje nginx
+3. Usuwa dummy
+4. Wywołuje certbot przez webroot (HTTP-01 na :80)
+5. Reload nginx z prawdziwym certem
 
-```nginx
-server {
-    listen 80;
-    server_name prostriker.online www.prostriker.online;
-    # certbot wypełni przekierowanie na HTTPS po krok 4
-    return 301 https://prostriker.online$request_uri;
-}
+**Sprawdź:** `https://prostriker.online` — przeglądarka pokaże ostrzeżenie (staging cert), ale strona się załaduje.
 
-# HTTPS (Certbot doda blok lub uzupełni; tu szablon docelowy)
-server {
-    listen 443 ssl http2;
-    server_name www.prostriker.online;
-    # ssl_certificate / ssl_certificate_key — wklei Certbot
-    return 301 https://prostriker.online$request_uri;
-}
+---
 
-server {
-    listen 443 ssl http2;
-    server_name prostriker.online;
-
-    # ssl_certificate     /etc/letsencrypt/live/prostriker.online/fullchain.pem;
-    # ssl_certificate_key /etc/letsencrypt/live/prostriker.online/privkey.pem;
-    # (wstawi Certbot)
-
-    # ROOT → landing page (index.html w korzeniu repo); gra w /www/
-    root /opt/prostriker-web;
-    index index.html;
-
-    # WebSocket multiplayer
-    location /ws {
-        proxy_pass http://127.0.0.1:3000/ws;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 86400;
-    }
-
-    # Health-check serwera (opcjonalnie publiczne)
-    location = /health {
-        proxy_pass http://127.0.0.1:3000/health;
-    }
-
-    # app-ads.txt - AdMob crawler szuka w root
-    location = /app-ads.txt {
-        try_files /app-ads.txt =404;
-    }
-
-    # Statyki: cache długi dla wersjonowanych assetów, no-cache dla index.html
-    # / → landing (index.html), /www/ → gra. Nieznane ścieżki → landing.
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-    location ~* \.(png|jpg|svg|woff2)$ {
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-    location ~* \.(html|js|json)$ {
-        expires -1;
-        add_header Cache-Control "no-cache, must-revalidate";
-    }
-}
-```
+## 7. Przełączenie na prawdziwy cert
 
 ```bash
-ln -s /etc/nginx/sites-available/prostriker.online /etc/nginx/sites-enabled/
-nginx -t   # walidacja
-systemctl reload nginx
+nano .env   # STAGING=0
+
+docker compose down
+sudo rm -rf certbot/conf/live certbot/conf/archive certbot/conf/renewal
+
+./init-letsencrypt.sh
+```
+
+Teraz `https://prostriker.online` bez ostrzeżenia.
+
+---
+
+## 8. Start całego stacka
+
+```bash
+cd /opt/prostriker/socker/deploy
+docker compose up -d
+docker compose ps
+docker compose logs -f --tail=50
+```
+
+Sprawdź:
+- `curl -I https://prostriker.online` → 200 OK
+- `curl -I https://prostriker.online/www/` → 200 OK
+- Test WS w konsoli przeglądarki:
+  ```js
+  new WebSocket("wss://prostriker.online/ws")
+  ```
+
+---
+
+## 9. Update / redeploy
+
+```bash
+cd /opt/prostriker/socker && git pull
+cd /opt/prostriker/socker-server && git pull
+cd /opt/prostriker/socker/deploy
+docker compose build mp-server   # tylko jeśli zmiany w socker-server
+docker compose up -d
 ```
 
 ---
 
-## Krok 4 — HTTPS przez Let's Encrypt
+## 10. Troubleshooting
 
+### nginx nie startuje
 ```bash
-certbot --nginx -d prostriker.online -d www.prostriker.online
-# wybierz: zgoda na ToS, e-mail, redirect HTTP→HTTPS (zalecane: tak)
+docker compose logs nginx | head -30
+```
+Brak certyfikatów → krok 6.
+
+### certbot nie działa
+- Test `:80`: `curl http://prostriker.online/.well-known/acme-challenge/test` → 404 (dobre)
+- UFW: `sudo ufw status`
+- DNS: `dig +short prostriker.online @8.8.8.8`
+
+### mp-server nie startuje
+```bash
+docker compose logs mp-server
+```
+Najczęściej: brak `"start"` w `package.json` socker-server lub brak `index.js`.
+
+### WebSocket zrywa
+- `proxy_read_timeout` w `nginx.conf` (jest 3600s)
+- Klient ma ping/pong w `www/net.js`
+
+### Pełny restart
+```bash
+docker compose down && docker compose up -d
 ```
 
-Po sukcesie Certbot dopisuje ścieżki do certów w Nginx, restartuje go i ustawia auto-odnawianie (cron / systemd timer).
-
-Test:
+### Nuke i odbuduj (zostawia certy)
 ```bash
-curl -I https://prostriker.online/
-curl https://prostriker.online/health
-curl https://prostriker.online/app-ads.txt
+docker compose down -v
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ---
 
-## Krok 5 — aktualizacje produkcji
+## 11. Monitoring (proste, F0)
 
-### Update gry (statyki)
-```bash
-cd /opt/prostriker-web
-git pull origin main
-# nginx serwuje pliki on the fly — bez restartu
-```
-
-### Update serwera multiplayer
-```bash
-cd /opt/socker-server
-git pull origin main
-docker compose up -d --build
-# down-time: ~5s (rebuild + restart)
-```
-
-### Restart bez deploya
-```bash
-docker compose restart           # serwer mp
-systemctl reload nginx           # statyki + proxy
-```
+UptimeRobot (darmowy, poza Twoją infrą):
+- monitor HTTPS `https://prostriker.online` co 5 min
+- alert email/SMS jak padnie
 
 ---
 
-## Krok 6 — monitoring (lekki, na start)
+## 12. Co dalej (F1+)
 
-### Logi
-```bash
-docker compose logs -f           # logi serwera mp (na żywo)
-tail -f /var/log/nginx/access.log
-tail -f /var/log/nginx/error.log
-```
-
-### Auto-odnawianie certów (sprawdź)
-```bash
-systemctl status certbot.timer
-certbot renew --dry-run
-```
-
-### Healthcheck zewnętrzny (opcjonalnie)
-Wskaż UptimeRobot / Better Uptime na `https://prostriker.online/health` (co 5 min).
-
----
-
-## Anty-DoS (podstawowe)
-
-W `nginx.conf` (lub osobny include):
-
-```nginx
-limit_req_zone $binary_remote_addr zone=mp_ws:10m rate=5r/s;
-limit_conn_zone $binary_remote_addr zone=mp_conn:10m;
-
-server {
-    # …
-    location /ws {
-        limit_req zone=mp_ws burst=20 nodelay;
-        limit_conn mp_conn 10;
-        # …reszta jak wyżej
-    }
-}
-```
-
-Serwer ma już własne rate-limity per IP — to dodatkowa warstwa.
-
----
-
-## Backup (gdy będą dane)
-
-Na razie serwer trzyma pokoje w pamięci — restart = czysto. Backup nie jest potrzebny.
-**Wraz z Fazą 3 (turnieje + ranking ELO)** dojdzie Postgres → wtedy dorobimy `docker compose` ze
-`pg_dump | aws s3 cp` cron daily.
-
----
-
-## Checklist deployu (po Krok 1-4)
-
-- [ ] `dig prostriker.online +short` → IP VPS
-- [ ] `curl https://prostriker.online/` → otwiera grę
-- [ ] `curl https://prostriker.online/health` → `{"ok":true,...}`
-- [ ] `curl https://prostriker.online/app-ads.txt` → linijka z pub-ID
-- [ ] `curl https://prostriker.online/legal/privacy.html` → polityka
-- [ ] Otwórz w 2 przeglądarkach → tryb Online → utwórz pokój → dołącz po kodzie → grajcie
-- [ ] HTTPS pad-lock zielony, brak ostrzeżeń o certyfikacie
-- [ ] W AdMob → Apps → Socker → **app-ads.txt** → wpisz `https://prostriker.online/`
-  (Google sam dopaszuje `/app-ads.txt`, weryfikacja do 24h)
-- [ ] W Play Console: Privacy policy URL = `https://prostriker.online/legal/privacy.html`
-
-Po wszystkim — gra dostępna publicznie, AdMob zweryfikowany, multiplayer działa z dowolnego urządzenia.
-
----
-
-## Co dalej
-
-- Build APK z `MP_SERVER_URL=undefined` (automatycznie weźmie `wss://prostriker.online/ws`,
-  bo `location.host` = `prostriker.online`)
-- Wgranie AAB do Play Console → closed testing → produkcja
-- Faza 3: turnieje (wtedy dochodzi Postgres)
+Gdy startuje Faza 3 (auth/DB) — patrz [INFRA-PLAN.md](INFRA-PLAN.md) F1:
+- Dochodzi `vm-db` (Postgres) na osobnej VM
+- Sieć prywatna `vmbr1` między `vm-prod` ↔ `vm-db`
+- Backupy 3-2-1 do S3/Backblaze

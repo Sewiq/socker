@@ -1,0 +1,67 @@
+# Docker-compose stack dla F0 (1 VM).
+#
+# Layout na VM:
+#   /opt/prostriker/
+#   ├── socker/           ← to repo (statyki, deploy/, landing)
+#   │   ├── index.html    ← landing
+#   │   ├── www/          ← gra (PWA)
+#   │   └── deploy/       ← TEN katalog
+#   └── socker-server/    ← osobne repo (klon github.com/Sewiq/socker-server)
+#       └── package.json  ← Node + ws
+#
+# Uruchomienie:  cd deploy && docker compose up -d
+# Reload nginx:  docker compose exec nginx nginx -s reload
+# Logi:          docker compose logs -f --tail=100
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: prostriker-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../index.html:/var/www/landing/index.html:ro
+      - ../assets:/var/www/landing/assets:ro
+      - ../www:/var/www/play:ro
+      - ../app-ads.txt:/var/www/landing/app-ads.txt:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - mp-server
+    networks:
+      - prostriker
+
+  mp-server:
+    build:
+      context: ../../socker-server
+      dockerfile: ../socker/deploy/mp-server.Dockerfile
+    container_name: prostriker-mp
+    restart: unless-stopped
+    expose:
+      - "3000"
+    env_file:
+      - .env
+    networks:
+      - prostriker
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: prostriker-certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    # Renew loop: co 12h próba odnowienia; Let's Encrypt odnawia tylko jeśli < 30 dni.
+    entrypoint: >
+      /bin/sh -c "trap exit TERM;
+      while :; do
+        certbot renew --webroot -w /var/www/certbot --quiet;
+        sleep 12h & wait $${!};
+      done"
+
+networks:
+  prostriker:
+    driver: bridge
