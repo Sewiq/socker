@@ -24,27 +24,35 @@ Legenda priorytetów: 🔴 wysoki · 🟡 średni · 🟢 niski (nice-to-have)
 
 ## 🚀 Deploy / infrastruktura
 
-> Architektura: **Proxmox + 10 VM + 2 publiczne IP (floating VIP)** — pełny plan
-> w [INFRA-PLAN.md](INFRA-PLAN.md). Skala docelowa: 100-1000 gier online.
-> Edge ×2 (HA), App ×2 (load-balanced), DB primary+replica, Redis, Tools, Staging.
+> Architektura: **fazowo, od 1 VM do HA** — pełny plan w [INFRA-PLAN.md](INFRA-PLAN.md).
+> Zasada: start mały, skaluj na sygnał (CCU, latencja, koszt downtime).
+> Nie budujemy 10-VM klastra „na zapas".
 
-- [ ] 🔴 **Cloud-init template w Proxmoxie** (Debian 12 + klucz SSH + base).
-- [ ] 🔴 **Sieć prywatna `vmbr1` 10.10.0.0/16** + firewall Proxmox per VM.
-- [ ] 🔴 **WireGuard hub na vm-tools** (admin VPN do prywatnej sieci).
-- [ ] 🔴 **Provisioning 10 VM-ów** (edge×2, app×2, app-stg, db-primary,
-      db-replica, db-stg, redis, tools).
-- [ ] 🔴 **DNS + keepalived VRRP** (floating IP między vm-edge-1/2).
-- [ ] 🔴 **Nginx na edge + Certbot DNS-01 wildcard** (`*.prostriker.online`).
-- [ ] 🔴 **Deploy app prod ×2 (mp-server + statyki) + Redis**.
-- [ ] 🔴 **Deploy app staging** na `staging.prostriker.online`.
-- [ ] 🟡 **Postgres primary + streaming replica** + WAL archive.
-- [ ] 🟡 **Postgres staging** (osobne dane, restart-friendly).
-- [ ] 🟡 **Monitoring** (Prometheus + Grafana + Loki + Alertmanager → Telegram).
-- [ ] 🟡 **Backupy 3-2-1** (pg_basebackup → vm-tools → S3/Backblaze) + cron-test-restore.
-- [ ] 🟡 **CI/CD self-hosted runner** na vm-tools (push→staging→smoke→release→prod).
-- [ ] 🟡 **Internal DNS** (dnsmasq na vm-tools): `*.internal` → prywatne IP.
+### F0 — MVP (1 VM) ⬅️ teraz
+- [ ] 🔴 **Cloud-init Debian 12** na 1 VM (2 vCPU / 2 GB / 20 GB) + klucz SSH.
+- [ ] 🔴 **Docker + docker-compose** (Nginx + Certbot + mp-server + statyki).
+- [ ] 🔴 **DNS A** `prostriker.online` → publiczny IP VM.
+- [ ] 🔴 **TLS Let's Encrypt** (HTTP-01, bez wildcard na tym etapie).
 - [ ] 🔴 **Aktualizacja app-ads.txt URL w AdMob** na `https://prostriker.online/` po deployu.
-- [ ] 🟡 **External healthcheck** (UptimeRobot — POZA Twoją infrą) na `/health`.
+- [ ] 🟡 **External healthcheck** (UptimeRobot — poza Twoją infrą) na `/health`.
+
+### F1 — przy starcie Fazy 3 (dochodzi vm-db)
+- [ ] 🟡 **vm-db** (Postgres w LXC/VM) + prywatna sieć `vmbr1`.
+- [ ] 🟡 **Backupy** `pg_basebackup` → S3/Backblaze + cron-test-restore.
+
+### F2 — skala out (na sygnał)
+- [ ] 🟢 **vm-app-2** + Nginx `least_conn` (gdy CPU > 70 % lub > 200 CCU).
+- [ ] 🟢 **vm-redis** (gdy > 1 instancja mp-server — wspólny stan pokoi).
+- [ ] 🟢 **Replika Postgresa** (gdy RTO < 5 min wymagane).
+- [ ] 🟢 **Staging** `vm-app-stg` + `vm-db-stg` (gdy psucie proda zaboli).
+
+### F3 — HA (gdy projekt „złapie")
+- [ ] 🟢 **Edge ×2 + keepalived VRRP** (floating IP, drugi publ. IP).
+- [ ] 🟢 **Monitoring** (Prometheus + Grafana + Loki + Alertmanager → Telegram).
+- [ ] 🟢 **CI/CD self-hosted runner** na vm-tools.
+- [ ] 🟢 **WireGuard hub** (zamiast SSH na publ. IP).
+- [ ] 🟢 **Internal DNS** (dnsmasq): `*.internal` → prywatne IP.
+- [ ] 🟢 **Wildcard cert DNS-01** `*.prostriker.online`.
 
 ---
 
