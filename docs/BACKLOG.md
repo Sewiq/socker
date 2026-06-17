@@ -24,8 +24,21 @@ Legenda priorytetów: 🔴 wysoki · 🟡 średni · 🟢 niski (nice-to-have)
 
 ## 🚀 Deploy / infrastruktura
 
-- [ ] 🔴 **Deploy serwera + gry na VPS** pod `prostriker.online` — wg [DEPLOY.md](DEPLOY.md)
-      (DNS, Docker, Nginx, Certbot HTTPS, reverse proxy `/ws`).
+> Architektura 2× VM + 1 publiczny IP: szczegóły w [INFRA-PLAN.md](INFRA-PLAN.md).
+> VM1 = prod (publiczny IP, Nginx + gra + mp + Postgres), VM2 = staging + narzędzia
+> (Postgres staging, Grafana, backupy) za prywatną siecią.
+
+- [ ] 🔴 **Provisioning VM1 + VM2** (Ubuntu/Debian, SSH key, ufw, fail2ban, swap).
+- [ ] 🔴 **Prywatna sieć VM1↔VM2** — natywna u dostawcy albo WireGuard.
+- [ ] 🔴 **DNS** — A-records: `prostriker.online`, `www`, `staging.prostriker.online`,
+      `metrics.prostriker.online` → publiczny IP VM1.
+- [ ] 🔴 **Nginx + Certbot na VM1** (reverse proxy per subdomena, TLS Let's Encrypt).
+- [ ] 🔴 **Deploy mp-server prod** na VM1 (docker-compose, `.env`, healthcheck `/health`).
+- [ ] 🟡 **Deploy mp-server staging** na VM2 (port 3001, ALLOWED_ORIGINS staging).
+- [ ] 🟡 **Postgres prod na VM1** + cron `pg_dump` pull-em z VM2.
+- [ ] 🟡 **Postgres staging na VM2** (dla Fazy 3 — DB testowa).
+- [ ] 🟡 **Monitoring** (Prometheus + Grafana + Loki na VM2, alertmanager → Telegram).
+- [ ] 🟡 **Backupy off-site** (S3/Backblaze ~5 zł/mc) — opcjonalne ale polecane.
 - [ ] 🔴 **Aktualizacja app-ads.txt URL w AdMob** na `https://prostriker.online/` po deployu.
 - [ ] 🟡 **Healthcheck zewnętrzny** (UptimeRobot) na `/health`.
 
