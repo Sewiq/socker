@@ -1,4 +1,4 @@
-package com.tchorzewski.pilkarzyki;
+package online.prostriker.app;
 
 import com.getcapacitor.BridgeActivity;
 
