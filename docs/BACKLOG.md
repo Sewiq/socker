@@ -52,7 +52,10 @@ Legenda priorytetów: 🔴 wysoki · 🟡 średni · 🟢 niski (nice-to-have)
 
 - [x] ✅ **Naprawić build AAB** — `org.gradle.java.home` w `android/gradle.properties`
       wymusza JDK 21 (AGP 8.7+ wspiera). Eliminuje kolizję zmiennej `HOST` w conda.
-- [ ] 🔴 **Keystore produkcyjny** + signing config + pierwszy AAB.
+- [x] ✅ **Keystore produkcyjny** + signing config — patrz [RELEASE.md](RELEASE.md).
+      Plik `prostriker.keystore` w root repo (NIE commitowany), referencja przez
+      `android/keystore.properties` (też ignored). Build.gradle podpisuje release
+      gdy properties istnieje.
 - [x] ✅ **Rename Capacitor `appId`** `com.tchorzewski.pilkarzyki` → `online.prostriker.app`
       (capacitor.config.json + namespace/applicationId + struktura folderów Java
       + strings.xml). Zrobione PRZED pierwszym wgraniem AAB.
