@@ -6,7 +6,7 @@ Darmowa z reklamami Google AdMob (banner u dołu).
 
 📊 **[Status projektu — co zrobione, co w planach →](docs/STATUS.md)**
 🛡️ **[Niezłomne zasady gry (inwarianty) →](docs/RULES-INVARIANTS.md)** — zasady są najważniejsze, kod nie może ich łamać
-🗺️ **[Roadmap →](docs/ROADMAP.md)** · 🧭 **[Strategia →](docs/STRATEGY.md)** · 🏆 **[Faza 3 — design →](docs/PHASE3-DESIGN.md)** · 📋 **[Backlog →](docs/BACKLOG.md)** · 🎮 **[Multiplayer →](docs/MULTIPLAYER.md)** · 🚀 **[Deploy →](docs/DEPLOY.md)** · 🖥️ **[Serwer](https://github.com/Sewiq/socker-server)**
+🗺️ **[Roadmap →](docs/ROADMAP.md)** · 🧭 **[Strategia →](docs/STRATEGY.md)** · 🏆 **[Faza 3 — design →](docs/PHASE3-DESIGN.md)** · 🌐 **[Infra (2×VM) →](docs/INFRA-PLAN.md)** · 📋 **[Backlog →](docs/BACKLOG.md)** · 🎮 **[Multiplayer →](docs/MULTIPLAYER.md)** · 🚀 **[Deploy →](docs/DEPLOY.md)** · 🖥️ **[Serwer](https://github.com/Sewiq/socker-server)**
 ⚡ **[Iteracja w przeglądarce — `npm run dev` →](docs/DEV.md)** · 📋 **[Pull → AAB →](docs/NEXT-STEPS.md)**
 
 Cały silnik gry żyje w `www/` jako zwykła PWA (HTML/CSS/JS, bez bibliotek).
