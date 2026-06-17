@@ -28,11 +28,13 @@
     --good:#2ea05a;
     --dot:#9fb3cf;
     --text:#23324f;
+    --ad-banner-pad:0px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:#eef1f5;color:var(--text);
     font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
-  .wrap{max-width:580px;margin:0 auto;padding:8px 10px 24px}
+  .wrap{max-width:580px;margin:0 auto;
+    padding:8px 10px calc(24px + var(--ad-banner-pad) + env(safe-area-inset-bottom, 0px))}
 
   /* TOP BAR — kompaktowy pasek u góry */
   .topbar{display:flex;align-items:center;gap:6px;padding:4px 2px 8px;position:relative}
@@ -1291,6 +1293,17 @@ async function initNative(){
   try{
     await requestConsent(AdMob);
     await AdMob.initialize({ initializeForTesting: AD_TESTING });
+    // Banner renderowany jest natywnie POZA WebView (overlay), więc treść
+    // strony go nie widzi i się chowa pod nim. Słuchamy bannerSize i
+    // ustawiamy CSS var, którym .wrap rezerwuje miejsce na dole.
+    const setBannerPad = (h) => {
+      const px = Math.max(0, Number(h) || 0);
+      document.documentElement.style.setProperty("--ad-banner-pad", px + "px");
+    };
+    AdMob.addListener("bannerSize", (info) => setBannerPad(info && info.height));
+    AdMob.addListener("bannerViewClosed", () => setBannerPad(0));
+    // Fallback gdyby bannerSize nie nadszedł (różne wersje pluginu):
+    setBannerPad(60);
     await AdMob.showBanner({
       adId: AD_UNIT_BANNER,
       adSize: "ADAPTIVE_BANNER",
