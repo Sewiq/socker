@@ -24,23 +24,27 @@ Legenda priorytetów: 🔴 wysoki · 🟡 średni · 🟢 niski (nice-to-have)
 
 ## 🚀 Deploy / infrastruktura
 
-> Architektura 2× VM + 1 publiczny IP: szczegóły w [INFRA-PLAN.md](INFRA-PLAN.md).
-> VM1 = prod (publiczny IP, Nginx + gra + mp + Postgres), VM2 = staging + narzędzia
-> (Postgres staging, Grafana, backupy) za prywatną siecią.
+> Architektura: **Proxmox + 10 VM + 2 publiczne IP (floating VIP)** — pełny plan
+> w [INFRA-PLAN.md](INFRA-PLAN.md). Skala docelowa: 100-1000 gier online.
+> Edge ×2 (HA), App ×2 (load-balanced), DB primary+replica, Redis, Tools, Staging.
 
-- [ ] 🔴 **Provisioning VM1 + VM2** (Ubuntu/Debian, SSH key, ufw, fail2ban, swap).
-- [ ] 🔴 **Prywatna sieć VM1↔VM2** — natywna u dostawcy albo WireGuard.
-- [ ] 🔴 **DNS** — A-records: `prostriker.online`, `www`, `staging.prostriker.online`,
-      `metrics.prostriker.online` → publiczny IP VM1.
-- [ ] 🔴 **Nginx + Certbot na VM1** (reverse proxy per subdomena, TLS Let's Encrypt).
-- [ ] 🔴 **Deploy mp-server prod** na VM1 (docker-compose, `.env`, healthcheck `/health`).
-- [ ] 🟡 **Deploy mp-server staging** na VM2 (port 3001, ALLOWED_ORIGINS staging).
-- [ ] 🟡 **Postgres prod na VM1** + cron `pg_dump` pull-em z VM2.
-- [ ] 🟡 **Postgres staging na VM2** (dla Fazy 3 — DB testowa).
-- [ ] 🟡 **Monitoring** (Prometheus + Grafana + Loki na VM2, alertmanager → Telegram).
-- [ ] 🟡 **Backupy off-site** (S3/Backblaze ~5 zł/mc) — opcjonalne ale polecane.
+- [ ] 🔴 **Cloud-init template w Proxmoxie** (Debian 12 + klucz SSH + base).
+- [ ] 🔴 **Sieć prywatna `vmbr1` 10.10.0.0/16** + firewall Proxmox per VM.
+- [ ] 🔴 **WireGuard hub na vm-tools** (admin VPN do prywatnej sieci).
+- [ ] 🔴 **Provisioning 10 VM-ów** (edge×2, app×2, app-stg, db-primary,
+      db-replica, db-stg, redis, tools).
+- [ ] 🔴 **DNS + keepalived VRRP** (floating IP między vm-edge-1/2).
+- [ ] 🔴 **Nginx na edge + Certbot DNS-01 wildcard** (`*.prostriker.online`).
+- [ ] 🔴 **Deploy app prod ×2 (mp-server + statyki) + Redis**.
+- [ ] 🔴 **Deploy app staging** na `staging.prostriker.online`.
+- [ ] 🟡 **Postgres primary + streaming replica** + WAL archive.
+- [ ] 🟡 **Postgres staging** (osobne dane, restart-friendly).
+- [ ] 🟡 **Monitoring** (Prometheus + Grafana + Loki + Alertmanager → Telegram).
+- [ ] 🟡 **Backupy 3-2-1** (pg_basebackup → vm-tools → S3/Backblaze) + cron-test-restore.
+- [ ] 🟡 **CI/CD self-hosted runner** na vm-tools (push→staging→smoke→release→prod).
+- [ ] 🟡 **Internal DNS** (dnsmasq na vm-tools): `*.internal` → prywatne IP.
 - [ ] 🔴 **Aktualizacja app-ads.txt URL w AdMob** na `https://prostriker.online/` po deployu.
-- [ ] 🟡 **Healthcheck zewnętrzny** (UptimeRobot) na `/health`.
+- [ ] 🟡 **External healthcheck** (UptimeRobot — POZA Twoją infrą) na `/health`.
 
 ---
 
