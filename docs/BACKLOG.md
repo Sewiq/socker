@@ -50,15 +50,17 @@ Legenda priorytetów: 🔴 wysoki · 🟡 średni · 🟢 niski (nice-to-have)
 
 ## 📱 Android / Play Store
 
-- [ ] 🔴 **Naprawić build AAB** — `bundleRelease` wywala się na detekcji JDK
-      (kolizja `HOST` w conda). Rozwiązanie: JDK 17 + `org.gradle.java.home`
-      w `gradle.properties` (patrz [NEXT-STEPS.md](NEXT-STEPS.md) krok D).
+- [x] ✅ **Naprawić build AAB** — `org.gradle.java.home` w `android/gradle.properties`
+      wymusza JDK 21 (AGP 8.7+ wspiera). Eliminuje kolizję zmiennej `HOST` w conda.
 - [ ] 🔴 **Keystore produkcyjny** + signing config + pierwszy AAB.
-- [ ] 🟡 **Rename Capacitor `appId`** `com.tchorzewski.pilkarzyki` → `online.prostriker.app`
-      PRZED pierwszym wgraniem AAB (po publikacji już się nie da zmienić).
-      Wymaga rename struktury folderów Java w `android/`.
-- [ ] 🔴 **Wyłączyć tryb testowy AdMob** (`AD_TESTING=false`) przed release.
-- [ ] 🔴 **Konto Play Console** ($25) + listing (gotowy w [PLAY-STORE-LISTING.md](PLAY-STORE-LISTING.md)).
+- [x] ✅ **Rename Capacitor `appId`** `com.tchorzewski.pilkarzyki` → `online.prostriker.app`
+      (capacitor.config.json + namespace/applicationId + struktura folderów Java
+      + strings.xml). Zrobione PRZED pierwszym wgraniem AAB.
+- [ ] 🔴 **Wyłączyć tryb testowy AdMob** (`AD_TESTING=false`) — **dopiero przy
+      production submission**. Na closed testing zostawiamy `initializeForTesting: true`,
+      żeby nie ryzykować bana konta AdMob przez przypadkowe kliki własnych reklam.
+- [x] ✅ **Konto Play Console** ($25) — aktywowane.
+- [ ] 🔴 **Listing w Play Console** — treści gotowe w [PLAY-STORE-LISTING.md](PLAY-STORE-LISTING.md).
 - [ ] 🔴 **Screenshoty do Play** z prawdziwego buildu (mamy już z landingu — można reużyć).
 - [ ] 🔴 **Closed testing** — 12 testerów × 14 dni (zegar tyka, uruchomić wcześnie).
 - [ ] 🟡 **AdMob + grupa wiekowa „dla wszystkich"** — skoro target = general audience,
@@ -136,8 +138,8 @@ Legenda priorytetów: 🔴 wysoki · 🟡 średni · 🟢 niski (nice-to-have)
 - [ ] 🟡 **`patch-package` dla pluginu AdMob** — `proguard-android.txt` → `-optimize`
       (teraz ręczny `sed` po każdym `npm install`).
 - [ ] 🟢 **Wyciszyć ostrzeżenia AGP 9** w `gradle.properties`.
-- [ ] 🟢 **`org.gradle.java.home` w `gradle.properties`** — żeby `bundleRelease`
-      nie zależał od zmiennej `HOST`/conda.
+- [x] ✅ **`org.gradle.java.home` w `gradle.properties`** — odporne na `HOST`/conda
+      (JDK 21).
 
 ---
 
