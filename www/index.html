@@ -11,20 +11,6 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ProStriker">
-<link rel="stylesheet" id="themeCss" href=""><!-- motyw ładowany dynamicznie z localStorage -->
-<script>
-  // Wczytaj zapisany motyw z localStorage ZANIM strona się wyrenderuje
-  // (eliminuje migotanie domyślnego stylu przed motywem).
-  (function(){
-    try{
-      var t = localStorage.getItem("prostriker:theme") || "";
-      if(t){
-        var l = document.getElementById("themeCss");
-        if(l) l.href = "themes/" + t + ".css";
-      }
-    }catch(e){}
-  })();
-</script>
 <script src="i18n.js"></script>
 <script src="storage.js"></script>
 <script src="countries.js"></script>
@@ -241,6 +227,21 @@
   .lvl-val{font-size:12px;color:var(--muted);font-weight:600;min-width:54px;text-align:right}
   .stats-empty{color:var(--muted);font-size:14px;text-align:center;padding:20px 8px}
 </style>
+<!-- Motyw ładowany PO inline <style>, żeby przebijał domyślne :root.
+     Inline script poniżej odczytuje localStorage i ustawia href zanim
+     przeglądarka zacznie renderować <body>. -->
+<link rel="stylesheet" id="themeCss" href="">
+<script>
+  (function(){
+    try{
+      var t = localStorage.getItem("prostriker:theme") || "";
+      if(t){
+        var l = document.getElementById("themeCss");
+        if(l) l.href = "themes/" + t + ".css";
+      }
+    }catch(e){}
+  })();
+</script>
 </head>
 <body>
 <div class="wrap">
