@@ -1,0 +1,41 @@
+/* Street Football — energiczny, uliczny, mocny.
+   Pomarańcz + czarny + biel + czerwony akcent. */
+:root{
+  --paper:#f4f1ea;
+  --grid:#c4b89a;
+  --margin:#e10000;
+  --ink:#1a1a1a;
+  --ink2:#ff6a00;
+  --ball:#ffce00;
+  --ball-ring:#a86c00;
+  --good:#00b341;
+  --dot:#7a7a7a;
+  --text:#f4f1ea;
+
+  --bg-page:#1a1a1a;
+  --panel-bg:#2a2a2a;
+  --panel-border:#ff6a00;
+  --panel-bg-soft:#333333;
+  --panel-border-soft:#444444;
+  --seg-bg:#1a1a1a;
+  --muted:#a8a8a8;
+  --muted-strong:#d8d8d8;
+  --board-border:#ff6a00;
+  --win1-bg:rgba(255,206,0,0.18);
+  --win1-border:#ffce00;
+  --win2-bg:rgba(255,106,0,0.18);
+  --win2-border:#ff6a00;
+  --bounce-bg:rgba(255,106,0,0.18);
+  --font-ui:"Impact","Oswald","Arial Black","Helvetica Neue",sans-serif;
+}
+html,body{
+  background:
+    repeating-linear-gradient(45deg, transparent 0 12px, rgba(255,106,0,0.03) 12px 13px),
+    var(--bg-page);
+}
+.brand{text-transform:uppercase;letter-spacing:1px;font-weight:900}
+.btn,.icon-btn,.seg button,.lang-seg button{text-transform:uppercase;letter-spacing:0.5px;font-weight:800}
+.panel,.status,.settings-pop,.modal-card{
+  box-shadow:4px 4px 0 rgba(0,0,0,0.4),0 0 0 2px var(--panel-border) inset
+}
+.icon-btn{border-width:2px}

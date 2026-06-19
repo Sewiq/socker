@@ -1,0 +1,35 @@
+/* Neon Arena — ciemny, nowoczesny, esportowy.
+   Ciemne tła + neonowe akcenty cyan/pink. */
+:root{
+  --paper:#0f1426;
+  --grid:rgba(0,229,255,0.18);
+  --margin:#ff3b8b;
+  --ink:#00e5ff;
+  --ink2:#ff4d8d;
+  --ball:#ffd200;
+  --ball-ring:#ff8800;
+  --good:#00ff88;
+  --dot:rgba(160,180,210,0.35);
+  --text:#e8f1ff;
+
+  --bg-page:#070a14;
+  --panel-bg:#131a2e;
+  --panel-border:rgba(0,229,255,0.25);
+  --panel-bg-soft:#1a2238;
+  --panel-border-soft:rgba(0,229,255,0.15);
+  --seg-bg:#0d1424;
+  --muted:#7a8aa8;
+  --muted-strong:#a8b8d4;
+  --board-border:rgba(0,229,255,0.3);
+  --win1-bg:rgba(0,229,255,0.15);
+  --win1-border:rgba(0,229,255,0.5);
+  --win2-bg:rgba(255,77,141,0.15);
+  --win2-border:rgba(255,77,141,0.5);
+  --bounce-bg:rgba(255,210,0,0.15);
+}
+html,body{background:radial-gradient(circle at 50% 0%, #1a2244 0%, var(--bg-page) 70%)}
+.brand,.brand img{filter:drop-shadow(0 0 8px rgba(0,229,255,0.4))}
+.btn.primary,.icon-btn.primary,.icon-btn.on,.seg button.on,.lang-seg button.on{
+  box-shadow:0 0 12px rgba(0,229,255,0.45)
+}
+.panel,.status,.settings-pop,.modal-card{box-shadow:0 0 20px rgba(0,229,255,0.08)}

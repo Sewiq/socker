@@ -1,0 +1,41 @@
+/* Vintage Notebook — bardziej "szkolny", ciepły papier + ołówek.
+   Mocniej notebook-owe od domyślnego (bardziej kremowo, bardziej brązowo). */
+:root{
+  --paper:#f7eed3;
+  --grid:#c5b78f;
+  --margin:#b03333;
+  --ink:#1d1d1d;
+  --ink2:#6b3410;
+  --ball:#cf6b15;
+  --ball-ring:#7a3000;
+  --good:#4d7a3a;
+  --dot:#9d8e6b;
+  --text:#2b1f0d;
+
+  --bg-page:#e8dfc4;
+  --panel-bg:#fdf6e3;
+  --panel-border:#c5b78f;
+  --panel-bg-soft:#f3e8c8;
+  --panel-border-soft:#d5c89c;
+  --seg-bg:#e8dfc4;
+  --muted:#7a6a48;
+  --muted-strong:#5a4a28;
+  --board-border:#a89866;
+  --win1-bg:#e8e0bc;
+  --win1-border:#a89866;
+  --win2-bg:#f0d6b8;
+  --win2-border:#b0825a;
+  --bounce-bg:#f0d6b8;
+  --font-ui:"Georgia","Times New Roman",serif;
+}
+html,body{
+  background:var(--bg-page);
+  background-image:repeating-linear-gradient(
+    transparent 0,
+    transparent 27px,
+    rgba(0,0,0,0.04) 27px,
+    rgba(0,0,0,0.04) 28px
+  );
+}
+.brand{font-family:Georgia,serif;font-style:italic}
+.panel{box-shadow:1px 2px 0 rgba(0,0,0,0.06),0 0 0 1px rgba(0,0,0,0.03) inset}

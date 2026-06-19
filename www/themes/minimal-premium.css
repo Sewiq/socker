@@ -1,0 +1,33 @@
+/* Minimal Premium — czysty, elegancki, "high-end".
+   Biel + szarości + jeden mocny akcent (Apple-like blue/orange). */
+:root{
+  --paper:#ffffff;
+  --grid:#e8eaed;
+  --margin:#ff3b30;
+  --ink:#000000;
+  --ink2:#007aff;
+  --ball:#ff9500;
+  --ball-ring:#cc6600;
+  --good:#34c759;
+  --dot:#d2d2d7;
+  --text:#1d1d1f;
+
+  --bg-page:#f5f5f7;
+  --panel-bg:#ffffff;
+  --panel-border:#e8eaed;
+  --panel-bg-soft:#fafafc;
+  --panel-border-soft:#f0f0f3;
+  --seg-bg:#f0f0f3;
+  --muted:#86868b;
+  --muted-strong:#3a3a3c;
+  --board-border:#e8eaed;
+  --win1-bg:#e8f0ff;
+  --win1-border:#b8d0ff;
+  --win2-bg:#fff0e0;
+  --win2-border:#ffcfa8;
+  --bounce-bg:#fff0e0;
+  --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",system-ui,sans-serif;
+}
+.panel,.status,.modal-card{box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 16px rgba(0,0,0,0.03)}
+.btn,.icon-btn{font-weight:500;letter-spacing:-0.01em}
+.brand{font-weight:700;letter-spacing:-0.02em}
