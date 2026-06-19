@@ -4,19 +4,21 @@
   --paper:#f4f1ea;
   --grid:#c4b89a;
   --margin:#e10000;
-  --ink:#1a1a1a;
-  --ink2:#ff6a00;
-  --ball:#ffce00;
-  --ball-ring:#a86c00;
+  --ink:#ff6a00;       /* player 1 + akcenty UI = bright orange (widoczne na ciemnym bg) */
+  --ink2:#ffce00;      /* player 2 = yellow */
+  --ball:#e10000;      /* piłka czerwona */
+  --ball-ring:#7a0000;
   --good:#00b341;
   --dot:#7a7a7a;
-  --text:#f4f1ea;
+  --text:#f4f1ea;      /* body text light na ciemnym tle */
+  --heading:#ff6a00;   /* nagłówki/brand = orange jak --ink */
+  --on-accent:#1a1a1a; /* tekst na przyciskach primary (czarny na pomarańczu) */
 
   --bg-page:#1a1a1a;
   --panel-bg:#2a2a2a;
   --panel-border:#ff6a00;
   --panel-bg-soft:#333333;
-  --panel-border-soft:#444444;
+  --panel-border-soft:#555555;
   --seg-bg:#1a1a1a;
   --muted:#a8a8a8;
   --muted-strong:#d8d8d8;

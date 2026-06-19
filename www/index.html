@@ -40,6 +40,8 @@
     --muted:#6b7a96;
     --muted-strong:#4a5a78;
     --board-border:#e6dfc6;
+    --heading:var(--ink);    /* tekst nagłówków, brand, tytuły — w ciemnych motywach nadpisuj osobno */
+    --on-accent:var(--panel-bg);  /* tekst na przyciskach primary (.btn.primary, .seg .on itd.) */
     --win1-bg:#e9f2ff;
     --win1-border:#bcd3f3;
     --win2-bg:#fdeee6;
@@ -63,8 +65,8 @@
     width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:16px;font-weight:700;
     display:inline-flex;align-items:center;justify-content:center;padding:0;line-height:1}
   .icon-btn:active{transform:translateY(1px)}
-  .icon-btn.primary{background:var(--ink);color:var(--panel-bg);border-color:var(--ink)}
-  .icon-btn.on{background:var(--ink);color:var(--panel-bg);border-color:var(--ink)}
+  .icon-btn.primary{background:var(--ink);color:var(--on-accent);border-color:var(--ink)}
+  .icon-btn.on{background:var(--ink);color:var(--on-accent);border-color:var(--ink)}
 
   /* SETTINGS POP — chowa się dopóki użytkownik nie chce zmienić ustawień */
   .settings-pop{position:absolute;top:46px;right:0;background:var(--panel-bg);border:1px solid var(--panel-border);
@@ -94,12 +96,12 @@
   .seg{display:inline-flex;background:var(--seg-bg);border-radius:10px;padding:3px;gap:3px;width:100%}
   .seg button{border:0;background:transparent;padding:7px 10px;border-radius:8px;
     font-size:13px;font-weight:600;color:var(--muted-strong);cursor:pointer;flex:1}
-  .seg button.on{background:var(--ink);color:var(--panel-bg)}
+  .seg button.on{background:var(--ink);color:var(--on-accent)}
 
   .btn{border:1px solid var(--panel-border);background:var(--panel-bg);color:var(--ink);font-weight:600;
     font-size:13px;padding:8px 13px;border-radius:10px;cursor:pointer}
   .btn:active{transform:translateY(1px)}
-  .btn.primary{background:var(--ink);color:var(--panel-bg);border-color:var(--ink)}
+  .btn.primary{background:var(--ink);color:var(--on-accent);border-color:var(--ink)}
 
   .banner{display:none;margin-top:10px;padding:12px;border-radius:12px;text-align:center;
     font-weight:700;font-size:16px}
@@ -134,13 +136,13 @@
   .lang-seg{display:inline-flex;background:var(--seg-bg);border-radius:10px;padding:3px;gap:3px;width:100%}
   .lang-seg button{border:0;background:transparent;padding:7px 10px;border-radius:8px;
     font-size:12px;font-weight:700;color:var(--muted-strong);cursor:pointer;text-transform:uppercase;letter-spacing:.5px;flex:1}
-  .lang-seg button.on{background:var(--ink);color:var(--panel-bg)}
+  .lang-seg button.on{background:var(--ink);color:var(--on-accent)}
   /* sekcja Zasady — numerowane karty z ikoną */
   .rules-summary{font-size:15px}
   .rule-list{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
   .rule-list li{display:flex;align-items:flex-start;gap:10px;background:var(--panel-bg-soft);
     border:1px solid var(--panel-border-soft);border-radius:10px;padding:9px 11px}
-  .rule-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--panel-bg);
+  .rule-num{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--on-accent);
     font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;margin-top:1px}
   .rule-ico{flex:0 0 auto;font-size:17px;line-height:1.3}
   .rule-text{font-size:13px;line-height:1.45}
@@ -192,7 +194,7 @@
   .field input:focus{outline:none;border-color:var(--ink)}
   .level-box{background:var(--panel-bg-soft);border:1px solid var(--panel-border);border-radius:12px;padding:12px}
   .level-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-  .level-badge{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--panel-bg);
+  .level-badge{width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--on-accent);
     font-size:14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
   .level-name{font-weight:700;color:var(--ink);font-size:14px;flex:1}
   .level-xp{font-size:12px;color:var(--muted);font-weight:600}
